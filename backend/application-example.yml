@@ -1,0 +1,25 @@
+﻿# Example application.yml showing required variables
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pathwise # Get from Neon or Supabase
+    username: postgres
+    password: postgres
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: your-google-client-id # Get from Google Cloud Console
+            client-secret: your-google-client-secret
+
+jwt:
+  secret: your-super-secret-jwt-key # Generate a 32+ byte random string
+
+ai:
+  groq:
+    api-key: your-groq-api-key # Get from console.groq.com
+  gemini:
+    api-key: your-gemini-api-key # Get from aistudio.google.com
+
+cors:
+  allowed-origins: http://localhost:5173 # Your frontend URL
