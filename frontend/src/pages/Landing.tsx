@@ -1,4 +1,4 @@
-﻿import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 
@@ -33,7 +33,10 @@ export default function Landing() {
               <Link to="/register">
                 <Button size="lg" className="w-full sm:w-auto text-lg px-8">Start Your Journey</Button>
               </Link>
-              <Button size="lg" variant="outline" onClick={handleInstantDemo} className="w-full sm:w-auto text-lg px-8">
+              <Link to="/login">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8">Log In</Button>
+              </Link>
+              <Button size="lg" variant="ghost" onClick={handleInstantDemo} className="w-full sm:w-auto text-lg px-8">
                 Try Instant Demo
               </Button>
             </>

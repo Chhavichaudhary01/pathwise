@@ -1,10 +1,10 @@
-﻿spring:
+spring:
   application:
     name: pathwise
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pathwise}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:***REMOVED***}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -17,7 +17,7 @@
   flyway:
     enabled: true
     baseline-on-migrate: true
-  security:
+  security: 
     oauth2:
       client:
         registration:
@@ -27,9 +27,9 @@
             scope: email, profile
 
 jwt:
-  secret: ${JWT_SECRET:this-is-a-default-secret-key-for-local-dev-only-change-it}
-  expiration-ms: ${JWT_EXPIRATION_MS:3600000} # 1 hour
-  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:86400000} # 24 hours
+  secret: ${JWT_SECRET:***REMOVED***}
+  expiration-ms: 3600000
+  refresh-expiration-ms: 86400000
 
 ai:
   groq:
@@ -41,7 +41,7 @@ cors:
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173}
 
 server:
-  port: 8080
+  port: 4444
   error:
     include-message: always
     include-binding-errors: always
