@@ -4,7 +4,7 @@ spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pathwise}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:***REMOVED***}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -27,7 +27,7 @@ spring:
             scope: email, profile
 
 jwt:
-  secret: ${JWT_SECRET:***REMOVED***}
+  secret: ${JWT_SECRET}
   expiration-ms: 3600000
   refresh-expiration-ms: 86400000
 
