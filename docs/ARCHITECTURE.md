@@ -1,4 +1,4 @@
-﻿# PathWise: System Architecture & Data Flow
+# PathWise: System Architecture & Data Flow
 
 This document details the architectural components, data flow, and the multi-stage AI pipeline of PathWise.
 
@@ -21,7 +21,6 @@ graph TD
     %% External Services
     subgraph External [External Services]
         Google[Google OAuth]
-        Groq[Groq AI API]
         Gemini[Google Gemini API]
     end
 
@@ -56,7 +55,6 @@ graph TD
     %% Connections
     Repository --> DB
     Security -.-> Google
-    LLM_Logic -.-> Groq
     LLM_Logic -.-> Gemini
 `
 

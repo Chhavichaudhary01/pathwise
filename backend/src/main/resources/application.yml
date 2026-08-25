@@ -2,9 +2,9 @@ spring:
   application:
     name: pathwise
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pathwise}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://ep-square-sea-azzex9dm.c-3.ap-southeast-1.aws.neon.tech:5432/neondb?sslmode=require}
+    username: ${SPRING_DATASOURCE_USERNAME:neondb_owner}
+    password: ${SPRING_DATASOURCE_PASSWORD:npg_LxHQ0YvgVXq4}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -27,13 +27,11 @@ spring:
             scope: email, profile
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:pathwise_super_secret_jwt_key_that_is_at_least_32_bytes_long_123456789}
   expiration-ms: 3600000
   refresh-expiration-ms: 86400000
 
 ai:
-  groq:
-    api-key: ${GROQ_API_KEY:}
   gemini:
     api-key: ${GEMINI_API_KEY:}
 

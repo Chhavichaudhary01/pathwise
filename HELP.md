@@ -1,4 +1,4 @@
-﻿# Setup & Deployment Guide
+# Setup & Deployment Guide
 
 ## Prerequisites
 - Java 21
@@ -27,8 +27,7 @@ JWT_REFRESH_EXPIRATION_MS=86400000
 SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID=your_client_id
 SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET=your_client_secret
 
-# AI Providers (Free tiers)
-GROQ_API_KEY=your_groq_api_key       # Get from console.groq.com
+# AI Provider (Free tier)
 GEMINI_API_KEY=your_gemini_api_key   # Get from aistudio.google.com
 
 # Allowed CORS Origins

@@ -3,9 +3,11 @@ package com.pathwise.engine;
 import com.pathwise.domain.CatalogItem;
 import com.pathwise.domain.CatalogItemSkill;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
+@Slf4j
 @Getter
 public class PrerequisiteGraph {
 
@@ -27,7 +29,7 @@ public class PrerequisiteGraph {
         for (CatalogItem item : items) {
             if (item.getItemSkills() == null) continue;
             for (CatalogItemSkill cis : item.getItemSkills()) {
-                if (cis.isOutcome()) {
+                if (cis.isOutcome() && cis.getSkill() != null) {
                     skillProviders.computeIfAbsent(cis.getSkill().getId(), k -> new HashSet<>()).add(item.getId());
                 }
             }
@@ -37,7 +39,7 @@ public class PrerequisiteGraph {
         for (CatalogItem item : items) {
             if (item.getItemSkills() == null) continue;
             for (CatalogItemSkill cis : item.getItemSkills()) {
-                if (cis.isPrerequisite()) {
+                if (cis.isPrerequisite() && cis.getSkill() != null) {
                     Set<UUID> providers = skillProviders.get(cis.getSkill().getId());
                     if (providers != null) {
                         for (UUID providerId : providers) {
@@ -50,39 +52,6 @@ public class PrerequisiteGraph {
                 }
             }
         }
-
-        if (hasCycle()) {
-            throw new IllegalStateException("Circular dependency detected in prerequisite graph");
-        }
-    }
-
-    private boolean hasCycle() {
-        Set<UUID> visited = new HashSet<>();
-        Set<UUID> recursionStack = new HashSet<>();
-
-        for (UUID nodeId : adjacencyList.keySet()) {
-            if (hasCycleUtil(nodeId, visited, recursionStack)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean hasCycleUtil(UUID nodeId, Set<UUID> visited, Set<UUID> recursionStack) {
-        if (recursionStack.contains(nodeId)) return true;
-        if (visited.contains(nodeId)) return false;
-
-        visited.add(nodeId);
-        recursionStack.add(nodeId);
-
-        for (UUID neighbor : adjacencyList.getOrDefault(nodeId, Collections.emptySet())) {
-            if (hasCycleUtil(neighbor, visited, recursionStack)) {
-                return true;
-            }
-        }
-
-        recursionStack.remove(nodeId);
-        return false;
     }
 
     public List<CatalogItem> topologicalSort(Set<UUID> itemsToSort) {
@@ -107,17 +76,27 @@ public class PrerequisiteGraph {
         }
 
         List<CatalogItem> sorted = new ArrayList<>();
+        Set<UUID> added = new HashSet<>();
         while (!queue.isEmpty()) {
             UUID curr = queue.poll();
-            sorted.add(itemsById.get(curr));
+            if (added.add(curr) && itemsById.containsKey(curr)) {
+                sorted.add(itemsById.get(curr));
 
-            for (UUID neighbor : adjacencyList.getOrDefault(curr, Collections.emptySet())) {
-                if (itemsToSort.contains(neighbor)) {
-                    inDegree.put(neighbor, inDegree.get(neighbor) - 1);
-                    if (inDegree.get(neighbor) == 0) {
-                        queue.add(neighbor);
+                for (UUID neighbor : adjacencyList.getOrDefault(curr, Collections.emptySet())) {
+                    if (itemsToSort.contains(neighbor)) {
+                        inDegree.put(neighbor, inDegree.get(neighbor) - 1);
+                        if (inDegree.get(neighbor) <= 0 && !added.contains(neighbor)) {
+                            queue.add(neighbor);
+                        }
                     }
                 }
+            }
+        }
+
+        // Fallback: If any cyclical edges prevented inDegree reaching 0, append remaining items
+        for (UUID id : itemsToSort) {
+            if (!added.contains(id) && itemsById.containsKey(id)) {
+                sorted.add(itemsById.get(id));
             }
         }
 
