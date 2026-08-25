@@ -32,7 +32,12 @@ export default function Register() {
       login(signinRes.data.accessToken, signinRes.data.refreshToken, { id: signinRes.data.id, email: signinRes.data.email });
       navigate('/', { replace: true });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed. Please try a different email or check credentials.');
+      console.error('Registration error:', err);
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('Server request timed out. Render backend may still be waking up from sleep. Please try again in a moment.');
+      } else {
+        setError(err.response?.data?.message || 'Registration failed. Please check credentials or backend status.');
+      }
     } finally {
       setLoading(false);
     }
@@ -81,6 +86,11 @@ export default function Register() {
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-medium">
                 {error}
               </div>
+            )}
+            {loading && (
+              <p className="text-xs text-blue-600 text-center animate-pulse">
+                Connecting to backend (may take ~30–45s if server is waking up)...
+              </p>
             )}
             <Button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 font-bold py-2.5">
               {loading ? 'Creating account...' : 'Create Account & Start 🚀'}

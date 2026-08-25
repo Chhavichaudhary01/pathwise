@@ -30,12 +30,17 @@ export default function Login() {
       login(res.data.accessToken, res.data.refreshToken, { id: res.data.id, email: res.data.email });
       navigate('/', { replace: true });
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || 
-        (err.response?.status === 401 
-          ? 'Invalid email or password. If you haven’t registered yet, please click "Sign up" below.' 
-          : 'Unable to connect to server. Please ensure the backend is running.')
-      );
+      console.error('Login error:', err);
+      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('Server request timed out. Render backend may still be waking up from sleep (takes ~45s). Please try again in a moment.');
+      } else {
+        setError(
+          err.response?.data?.message || 
+          (err.response?.status === 401 
+            ? 'Invalid email or password. If you haven’t registered yet, please click "Create an account" below.' 
+            : 'Unable to connect to server. Please check your backend service status on Render.')
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -83,6 +88,11 @@ export default function Login() {
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-medium">
                 {error}
               </div>
+            )}
+            {loading && (
+              <p className="text-xs text-blue-600 text-center animate-pulse">
+                Connecting to backend (may take ~30–45s if server is waking up)...
+              </p>
             )}
             <Button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 font-bold py-2.5">
               {loading ? 'Signing in...' : 'Sign In 🚀'}
