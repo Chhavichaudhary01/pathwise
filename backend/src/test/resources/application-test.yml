@@ -1,4 +1,4 @@
-﻿spring:
+spring:
   datasource:
     url: jdbc:tc:postgresql:16-alpine:///pathwisetest
     driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
@@ -12,7 +12,5 @@ jwt:
   expiration-ms: 3600000
   refresh-expiration-ms: 86400000
 ai:
-  groq:
-    api-key: mock-key
   gemini:
     api-key: mock-key

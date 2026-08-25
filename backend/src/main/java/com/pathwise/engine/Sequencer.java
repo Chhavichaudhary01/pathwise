@@ -1,6 +1,5 @@
 package com.pathwise.engine;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pathwise.ai.AiProvider;
@@ -11,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -23,51 +23,57 @@ public class Sequencer {
     private final AiProvider aiProvider;
     private final ObjectMapper objectMapper;
 
+    private final Map<UUID, List<Float>> itemEmbeddingCache = new ConcurrentHashMap<>();
+
     public List<CatalogItem> generateSequence(LearnerProfile profile) {
         List<CatalogItem> allItems = catalogItemRepository.findAll();
+        if (allItems.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String goalText = profile != null && profile.getGoal() != null && !profile.getGoal().isBlank() 
+                ? profile.getGoal() 
+                : "Full Stack Web Development";
 
         // 1. Get Goal Embeddings
-        List<Float> goalEmbedding = aiProvider.getEmbeddings(profile.getGoal());
+        List<Float> goalEmbedding = aiProvider.getEmbeddings(goalText);
 
         // Parse user skills
         Set<String> userSkills = new HashSet<>();
-        try {
-            if (profile.getCurrentSkills() != null && !profile.getCurrentSkills().isEmpty() && !profile.getCurrentSkills().equals("[]")) {
+        if (profile != null && profile.getCurrentSkills() != null && !profile.getCurrentSkills().isEmpty() && !profile.getCurrentSkills().equals("[]")) {
+            try {
                 List<String> skills = objectMapper.readValue(profile.getCurrentSkills(), new TypeReference<List<String>>() {});
                 userSkills.addAll(skills);
+            } catch (Exception e) {
+                log.warn("Failed to parse current skills");
             }
-        } catch (Exception e) {
-            log.warn("Failed to parse current skills for user {}", profile.getUser().getId());
         }
+
+        String preferredFormat = profile != null ? profile.getLearningStyle() : null;
 
         // 2. Score items
         List<ItemScore> scoredItems = new ArrayList<>();
         for (CatalogItem item : allItems) {
-            List<Float> itemEmbedding = null;
-            try {
-                if (item.getEmbedding() != null && !item.getEmbedding().isEmpty()) {
-                    itemEmbedding = objectMapper.readValue(item.getEmbedding(), new TypeReference<List<Float>>() {});
-                } else {
-                    // Fallback to generating on the fly
-                    itemEmbedding = aiProvider.getEmbeddings(item.getTitle() + " " + item.getDescription());
-                }
-            } catch (Exception e) {
-                log.warn("Failed to get/parse embedding for item {}", item.getId());
-            }
-
-            double score = scoringService.calculateScore(item, goalEmbedding, itemEmbedding, userSkills, profile.getLearningStyle());
+            List<Float> itemEmbedding = getItemEmbedding(item);
+            double score = scoringService.calculateScore(item, goalEmbedding, itemEmbedding, userSkills, preferredFormat);
             scoredItems.add(new ItemScore(item, score));
         }
 
-        // 3. Filter top N items (e.g. top 10 items > 50 score)
+        // 3. Filter top items
+        scoredItems.sort((a, b) -> Double.compare(b.score, a.score));
+        
         List<CatalogItem> topItems = scoredItems.stream()
-                .filter(is -> is.score > 20.0)
-                .sorted((a, b) -> Double.compare(b.score, a.score))
-                .limit(10)
+                .filter(is -> is.score >= 40.0)
+                .limit(8)
                 .map(is -> is.item)
                 .collect(Collectors.toList());
 
-        if (topItems.isEmpty()) return Collections.emptyList();
+        if (topItems.isEmpty()) {
+            topItems = scoredItems.stream()
+                    .limit(6)
+                    .map(is -> is.item)
+                    .collect(Collectors.toList());
+        }
 
         // Add prerequisites that might be missing
         Set<UUID> finalItemsToSequence = new HashSet<>();
@@ -78,27 +84,48 @@ public class Sequencer {
 
         // 4. Topological Sort
         PrerequisiteGraph graph = new PrerequisiteGraph();
-        graph.buildGraph(allItems); // Build graph with all items to resolve edges
+        graph.buildGraph(allItems);
 
-        return graph.topologicalSort(finalItemsToSequence);
+        List<CatalogItem> sorted = graph.topologicalSort(finalItemsToSequence);
+        return sorted.isEmpty() ? topItems : sorted;
+    }
+
+    private List<Float> getItemEmbedding(CatalogItem item) {
+        if (itemEmbeddingCache.containsKey(item.getId())) {
+            return itemEmbeddingCache.get(item.getId());
+        }
+
+        List<Float> embedding = null;
+        try {
+            if (item.getEmbedding() != null && !item.getEmbedding().isEmpty()) {
+                embedding = objectMapper.readValue(item.getEmbedding(), new TypeReference<List<Float>>() {});
+            }
+        } catch (Exception ignored) {}
+
+        if (embedding == null) {
+            embedding = aiProvider.getEmbeddings(item.getTitle() + " " + (item.getDescription() != null ? item.getDescription() : ""));
+        }
+
+        if (embedding != null) {
+            itemEmbeddingCache.put(item.getId(), embedding);
+        }
+        return embedding;
     }
 
     private void addMissingPrerequisites(CatalogItem item, List<CatalogItem> allItems, Set<String> userSkills, Set<UUID> itemsToSequence) {
         if (item.getItemSkills() == null) return;
         
         for (CatalogItemSkill cis : item.getItemSkills()) {
-            if (cis.isPrerequisite() && !userSkills.contains(cis.getSkill().getId())) {
-                // Find an item that provides this skill
+            if (cis.isPrerequisite() && cis.getSkill() != null && !userSkills.contains(cis.getSkill().getId())) {
                 for (CatalogItem potentialProvider : allItems) {
                     if (potentialProvider.getItemSkills() == null) continue;
                     for (CatalogItemSkill providerCis : potentialProvider.getItemSkills()) {
-                        if (providerCis.isOutcome() && providerCis.getSkill().getId().equals(cis.getSkill().getId())) {
+                        if (providerCis.isOutcome() && providerCis.getSkill() != null && providerCis.getSkill().getId().equals(cis.getSkill().getId())) {
                             if (!itemsToSequence.contains(potentialProvider.getId())) {
                                 itemsToSequence.add(potentialProvider.getId());
-                                // recursively add prerequisites of the provider
                                 addMissingPrerequisites(potentialProvider, allItems, userSkills, itemsToSequence);
                             }
-                            break; // just add one provider
+                            break;
                         }
                     }
                 }

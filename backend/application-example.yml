@@ -1,4 +1,4 @@
-﻿# Example application.yml showing required variables
+# Example application.yml showing required variables
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/pathwise # Get from Neon or Supabase
@@ -16,8 +16,6 @@ jwt:
   secret: your-super-secret-jwt-key # Generate a 32+ byte random string
 
 ai:
-  groq:
-    api-key: your-groq-api-key # Get from console.groq.com
   gemini:
     api-key: your-gemini-api-key # Get from aistudio.google.com
 

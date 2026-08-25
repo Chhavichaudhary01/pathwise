@@ -1,43 +1,72 @@
-﻿# PathWise: Architecture & Implementation Decisions
+# PathWise: Architecture & Implementation Decisions
 
-This document outlines the key technical decisions made during the development of PathWise, along with the rationale behind them.
+This document outlines the key technical and design decisions made during the development of PathWise, along with the rationale behind them.
+
+---
 
 ## 1. Hybrid Recommendation Engine vs. "Pure LLM"
 
-*   **Decision:** Implement a hybrid engine where a deterministic Java core (scoring + topological sort on a prerequisite graph) handles the heavy lifting, while the LLM sits on top for natural language understanding and explanation.
-*   **Rationale:** 
-    *   **Reliability & Correctness:** LLMs are prone to hallucinating prerequisites or inventing non-existent courses. A deterministic graph guarantees that prerequisite rules are never violated and circular dependencies are avoided.
-    *   **Performance:** Pure Java topological sorting and scoring run in milliseconds and don't consume API tokens.
-    *   **Inspectability:** We can assign numeric "confidence/fit scores" based on actual data matching, making the system transparent rather than a black box.
+* **Decision:** Implement a hybrid engine where a deterministic Java core (scoring + topological sort on a prerequisite graph) handles sequencing, while Google Gemini AI sits on top for semantic understanding and contextual explanation.
+* **Rationale:** 
+  * **Zero Prerequisite Hallucinations:** LLMs are prone to hallucinating prerequisites or inventing non-existent courses. A deterministic graph guarantees that prerequisite rules are mathematically satisfied and circular dependencies are avoided.
+  * **Performance:** Pure Java topological sorting runs in milliseconds and consumes zero API tokens.
+  * **Inspectability:** We assign numeric fit scores and verified mastery badges based on actual data matching, making the system transparent rather than a black box.
+
+---
 
 ## 2. Embedding-Based Semantic Matching
 
-*   **Decision:** Use embedding-based semantic similarity (via a local sentence-transformers python service or Cohere free tier) to match user goals against catalog items, rather than simple tag matching.
-*   **Rationale:** 
-    *   **Nuance:** A user might say "I want to build web pages" while the catalog tags are "Frontend" or "React". Embeddings capture semantic intent, providing much higher quality recommendations than keyword matching.
-    *   **Innovation:** This goes beyond simple prompt engineering and demonstrates real ML technique depth.
+* **Decision:** Use Google's `text-embedding-004` vector embeddings with in-memory caching to semantically match free-text user goals against catalog item descriptions and skills.
+* **Rationale:** 
+  * **Nuance:** A learner might enter *"I want to create user-friendly web interfaces"* while catalog tags are *"React"* or *"Frontend"*. Embeddings capture semantic intent, providing higher quality recommendations than keyword matching.
+
+---
 
 ## 3. Tech Stack & Hosting Choices
 
-*   **Backend:** Spring Boot 3.x + Java 21. Chosen for enterprise-grade maturity, strong typing, and excellent ecosystem. Hosted on **Render**.
-*   **Database:** PostgreSQL on **Neon** (or Supabase). Chosen because it provides a permanent free tier and native JSONB support which is useful for storing flexible profile data.
-*   **Frontend:** React 18 + Vite + Tailwind CSS + shadcn/ui. Chosen for rapid development, excellent performance, and a polished, modern aesthetic. Hosted on **Vercel**.
-*   **AI Providers:** Groq as primary (for speed and cost-effectiveness) with Gemini as fallback. This ensures high availability and resilience against rate limits during demonstrations.
+* **Backend:** Spring Boot 3.3 + Java 21 on **Render**. Chosen for enterprise-grade type safety, layered architecture, and performance.
+* **Database:** PostgreSQL on **Neon Cloud (v18.6)**. Chosen for serverless autoscaling, instant branching, and permanent cloud reliability.
+* **Frontend:** React 19 + Vite + TypeScript + Tailwind CSS on **Vercel / Netlify**.
+* **AI Provider:** Google Gemini 1.5 Flash + Text-Embedding-004 with resilient deterministic fallbacks.
+
+---
 
 ## 4. JWT Authentication vs. Sessions
 
-*   **Decision:** Use JWT (JSON Web Tokens) with short-lived access tokens and longer-lived refresh tokens stored in HttpOnly cookies (or secure storage).
-*   **Rationale:** 
-    *   **Statelessness:** Makes the backend easily horizontally scalable.
-    *   **Security:** By keeping the access token in memory and the refresh token in an HttpOnly cookie, we mitigate both XSS and CSRF risks while providing a seamless user experience (silent refresh).
+* **Decision:** Use JWT (JSON Web Tokens) with access and refresh tokens, BCrypt password hashing, and role-based route protection.
+* **Rationale:** 
+  * **Statelessness:** Enables seamless horizontal scaling.
+  * **Security:** 256-bit SHA-256 HMAC tokens provide robust security while supporting silent refresh.
 
-## 5. Innovation Features
+---
 
-*   **"Day in the Life" Preview:** We added this to validate the user's *goal*, not just the *path*. Many users start learning a skill without knowing what the day-to-day work actually entails.
-*   **Peer Benchmarking (Synthetic):** Provides a powerful motivational tool without requiring real user data or raising privacy concerns. We use synthetic data to show "Learners on a similar path are typically at X% completion by week Y".
-*   **Instant No-Signup Demo Mode:** Crucial for hackathon judging. It reduces friction to zero, allowing judges to experience the core value proposition immediately.
+## 5. Innovation & Differentiation Features
+
+* **Mastery Checks, Not Self-Report:** Every milestone is gated by interactive 3-question mini-assessments to ensure genuine skill verification.
+* **Deliberate Serendipity Injection:** Surfacing multidisciplinary wildcard resources (e.g., WCAG Accessibility for Frontend developers).
+* **Weekly AI Progress Digest & Momentum Streak:** Proactively acknowledges consistency and effort to combat learner dropout.
+* **Instant No-Signup Demo Mode:** Bypasses authentication friction, seeding a live demo profile and dropping the visitor directly into the dashboard.
+
+---
 
 ## 6. Seed Data & Career Tracks
 
-*   **Decision:** Seed the catalog with 60-100 items covering 4-5 specific career tracks (e.g., Frontend, Data Analyst, ML Engineer, Product Manager).
-*   **Rationale:** A focused, high-quality catalog within specific domains provides a much better demonstration of the recommendation engine's capabilities than a sparse, generic catalog attempting to cover everything.
+* **Decision:** Seed the catalog with ~60 structured items covering 4 distinct career tracks (Frontend Developer, Data Analyst, Machine Learning Engineer, Full-Stack Developer).
+
+---
+
+## 7. UI/UX Design System (Section 6f Compliance)
+
+* **Color Palette:** Distinct, grounded color identity avoiding the generic purple/indigo AI cliché:
+  * Primary Canvas: Slate / Neutral (`#f8fafc`, `#ffffff`)
+  * Deep Accent: Midnight Slate & Navy (`#0f172a`, `#1e293b`, `#172554`)
+  * Progression & Mastery: Emerald / Forest Green (`#16a34a`, `#22c55e`)
+  * Action & Focus: Deep Cobalt Blue (`#2563eb`, `#1d4ed8`)
+  * Wildcard / Serendipity: Warm Amber (`#f59e0b`, `#fef3c7`)
+* **Typography & Hierarchy:** Bold display headlines, clean legible sans-serif body, with dedicated utility badges (fit scores, demand indicators, freshness badges).
+* **Signature Visual Moments:**
+  1. **Topological DAG Skill Graph (`/skill-graph`):** SVG interactive map with prerequisite arrows and color-coded mastery nodes.
+  2. **Adaptive Recalibration Narration:** Animated top banner communicating dynamically adjusted pathing upon learner feedback.
+  3. **Interactive Mastery Assessment Modal:** Instant grading and feedback to verify real retention.
+* **Copy Voice:** Learner-first, active voice (*"Mark Complete"*, *"Take Mastery Check"*, *"Open Resource"*), with constructive, supportive guidance.
+* **Quality & Accessibility Floor:** Full keyboard navigation, 375px mobile responsiveness, and high contrast compliant badges.
