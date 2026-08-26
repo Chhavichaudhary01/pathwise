@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://ep-square-sea-azzex9dm-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://ep-square-sea-azzex9dm.c-3.ap-southeast-1.aws.neon.tech:5432/neondb?sslmode=require}
     username: ${SPRING_DATASOURCE_USERNAME:neondb_owner}
     password: ${SPRING_DATASOURCE_PASSWORD:npg_LxHQ0YvgVXq4}
     driver-class-name: org.postgresql.Driver
@@ -14,5 +14,7 @@ jwt:
   expiration-ms: 3600000
   refresh-expiration-ms: 86400000
 ai:
+  groq:
+    api-key: mock-key
   gemini:
     api-key: mock-key

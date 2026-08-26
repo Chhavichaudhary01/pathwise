@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class GeminiAiProvider implements AiProvider {
 
+    @Value("${ai.groq.api-key:}")
+    private String groqApiKey;
+
     @Value("${ai.gemini.api-key:}")
     private String apiKey;
 
@@ -34,6 +37,16 @@ public class GeminiAiProvider implements AiProvider {
                 .build();
     }
 
+    private static final List<String> GROQ_MODELS = List.of(
+            "openai/gpt-oss-120b",
+            "openai/gpt-oss-20b",
+            "qwen/qwen3.6-27b",
+            "qwen/qwen3.8-27b",
+            "groq/compound"
+    );
+
+    private static final String GROQ_BASE_URL = "https://api.groq.com/openai/v1/chat/completions";
+
     private static final List<String> GEMINI_MODELS = List.of(
             "gemini-3.6-flash",
             "gemini-3.5-flash",
@@ -45,15 +58,57 @@ public class GeminiAiProvider implements AiProvider {
 
     private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
 
-    private boolean isMockOrMissingKey() {
-        return apiKey == null || apiKey.trim().isEmpty() || apiKey.equals("mock-key")
-                || apiKey.startsWith("your_") || apiKey.contains("your_gemini_api_key");
+    private boolean isValidKey(String key) {
+        return key != null && !key.trim().isEmpty() && !key.equals("mock-key")
+                && !key.startsWith("your_") && !key.contains("your_");
     }
 
     @Override
     public String generateText(String prompt) {
-        if (!isMockOrMissingKey()) {
-            WebClient client = this.webClient != null ? this.webClient : webClientBuilder.build();
+        WebClient client = this.webClient != null ? this.webClient : webClientBuilder.build();
+
+        // 1. Primary High-Speed Provider: Groq (Llama 3.3 70B / 8B)
+        if (isValidKey(groqApiKey)) {
+            for (String groqModel : GROQ_MODELS) {
+                try {
+                    Map<String, Object> requestBody = Map.of(
+                            "model", groqModel,
+                            "messages", List.of(Map.of("role", "user", "content", prompt)),
+                            "temperature", 0.7,
+                            "max_tokens", 2048
+                    );
+
+                    Map response = client
+                            .post()
+                            .uri(GROQ_BASE_URL)
+                            .header("Authorization", "Bearer " + groqApiKey.trim())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(requestBody)
+                            .retrieve()
+                            .bodyToMono(Map.class)
+                            .block();
+
+                    if (response != null && response.containsKey("choices")) {
+                        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+                        if (choices != null && !choices.isEmpty()) {
+                            Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                            if (message != null && message.containsKey("content")) {
+                                String text = (String) message.get("content");
+                                if (text != null && !text.isBlank()) {
+                                    log.info("Successfully generated AI response via Groq ({})", groqModel);
+                                    return text;
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Groq model {} attempt failed: {}. Falling over to next provider/model.", groqModel, e.getMessage());
+                }
+            }
+        }
+
+        // 2. Secondary Provider: Google Gemini
+        if (isValidKey(apiKey)) {
             for (String model : GEMINI_MODELS) {
                 try {
                     String url = BASE_URL + model + ":generateContent?key=" + apiKey.trim();
@@ -83,6 +138,7 @@ public class GeminiAiProvider implements AiProvider {
                             if (parts != null && !parts.isEmpty()) {
                                 String text = (String) parts.get(0).get("text");
                                 if (text != null && !text.isBlank()) {
+                                    log.info("Successfully generated AI response via Gemini ({})", model);
                                     return text;
                                 }
                             }
@@ -94,7 +150,7 @@ public class GeminiAiProvider implements AiProvider {
             }
         }
 
-        // Context-aware dynamic RAG reasoning fallback
+        // 3. Context-aware dynamic RAG reasoning fallback
         return generateDynamicRagResponse(prompt);
     }
 
@@ -122,7 +178,7 @@ public class GeminiAiProvider implements AiProvider {
 
     @Override
     public List<Float> getEmbeddings(String text) {
-        if (!isMockOrMissingKey()) {
+        if (isValidKey(apiKey)) {
             try {
                 String url = BASE_URL + "gemini-embedding-001:embedContent?key=" + apiKey.trim();
                 Map<String, Object> requestBody = Map.of(
