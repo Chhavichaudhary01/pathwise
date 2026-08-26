@@ -35,11 +35,12 @@ public class GeminiAiProvider implements AiProvider {
     }
 
     private static final List<String> GEMINI_MODELS = List.of(
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-1.5-flash-latest",
-            "gemini-1.5-pro",
-            "gemini-2.0-flash-lite-preview-02-05"
+            "gemini-3.6-flash",
+            "gemini-3.5-flash",
+            "gemini-3.1-flash-lite",
+            "gemini-3-flash-preview",
+            "gemini-flash-latest",
+            "gemini-3.7-flash"
     );
 
     private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
@@ -123,9 +124,9 @@ public class GeminiAiProvider implements AiProvider {
     public List<Float> getEmbeddings(String text) {
         if (!isMockOrMissingKey()) {
             try {
-                String url = BASE_URL + "text-embedding-004:embedContent?key=" + apiKey.trim();
+                String url = BASE_URL + "gemini-embedding-001:embedContent?key=" + apiKey.trim();
                 Map<String, Object> requestBody = Map.of(
-                        "model", "models/text-embedding-004",
+                        "model", "models/gemini-embedding-001",
                         "content", Map.of("parts", List.of(Map.of("text", text)))
                 );
 
