@@ -35,16 +35,14 @@ public class GeminiAiProvider implements AiProvider {
     }
 
     private static final List<String> GEMINI_MODELS = List.of(
+            "gemini-2.5-flash",
             "gemini-flash-latest",
             "gemini-pro-latest",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-1.5-flash-latest",
-            "gemini-1.5-pro",
-            "gemini-2.0-flash-lite-preview-02-05"
+            "gemini-3.1-flash-lite",
+            "gemini-2.5-flash-lite"
     );
 
-    private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
+    private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1/models/";
 
     public String getEffectiveApiKey() {
         if (apiKey != null && !apiKey.isBlank() && !isPlaceholder(apiKey)) {
