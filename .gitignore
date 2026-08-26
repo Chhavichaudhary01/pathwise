@@ -31,10 +31,17 @@ build/
 ### VS Code ###
 .vscode/
 
-### Custom ###
+### Custom Secrets & Environment Files ###
 .env
+.env.*
+*.env
+*.env.*
+*.local
+.env.local
+!*.example
+
+### Build outputs & reports ###
 node_modules/
 dist/
-.env.local
 playwright-report/
 test-results/
