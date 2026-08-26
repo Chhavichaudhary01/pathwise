@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import api from '@/lib/api';
 
 interface User {
     id: string;
@@ -11,6 +12,7 @@ interface AuthState {
     setUser: (user: User | null) => void;
     isAuthenticated: boolean;
     login: (accessToken: string, refreshToken: string, user: User) => void;
+    loginDemo: () => Promise<void>;
     logout: () => void;
 }
 
@@ -25,13 +27,7 @@ const getInitialUser = (): User | null => {
 
 const getInitialAuth = (): boolean => {
     const token = localStorage.getItem('accessToken');
-    if (!token || token === 'demo-access-token') {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('authUser');
-        return false;
-    }
-    return true;
+    return !!token;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -50,6 +46,22 @@ export const useAuthStore = create<AuthState>((set) => ({
         localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('authUser', JSON.stringify(user));
         set({ user, isAuthenticated: true });
+    },
+    loginDemo: async () => {
+        try {
+            const res = await api.post('/auth/demo');
+            const { accessToken, refreshToken, id, email } = res.data;
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('refreshToken', refreshToken);
+            const demoUser = { id, email: email || 'demo@pathwise.io' };
+            localStorage.setItem('authUser', JSON.stringify(demoUser));
+            set({ user: demoUser, isAuthenticated: true });
+        } catch {
+            const fallbackUser = { id: 'demo-user-id', email: 'demo@pathwise.io' };
+            localStorage.setItem('accessToken', 'demo-token');
+            localStorage.setItem('authUser', JSON.stringify(fallbackUser));
+            set({ user: fallbackUser, isAuthenticated: true });
+        }
     },
     logout: () => {
         localStorage.removeItem('accessToken');

@@ -3,8 +3,8 @@ package com.pathwise.domain;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.UUID;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
 @Entity
 @Table(name = "milestones")
@@ -27,5 +27,5 @@ public class Milestone {
     @OneToMany(mappedBy = "milestone", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
     @Builder.Default
-    private List<RoadmapItem> items = new ArrayList<>();
+    private Set<RoadmapItem> items = new LinkedHashSet<>();
 }

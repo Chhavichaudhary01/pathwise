@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
@@ -17,8 +17,10 @@ interface LandingData {
 }
 
 export default function Landing() {
-  const { user, logout } = useAuthStore();
+  const { user, isAuthenticated, loginDemo, logout } = useAuthStore();
   const [meta, setMeta] = useState<LandingData | null>(null);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     api.get('/landing')
@@ -37,19 +39,51 @@ export default function Landing() {
       });
   }, []);
 
+  const handleInstantDemo = async () => {
+    setDemoLoading(true);
+    try {
+      await loginDemo();
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Demo login error:', err);
+      navigate('/dashboard');
+    } finally {
+      setDemoLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
       <div className="max-w-4xl w-full text-center space-y-8">
         
         {/* Top User Bar */}
-        <div className="flex justify-between items-center bg-white border px-4 py-2 rounded-full shadow-sm max-w-lg mx-auto text-xs">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            <span className="font-semibold text-slate-700">Signed in as {user?.email}</span>
-          </div>
-          <button onClick={logout} className="text-slate-500 hover:text-red-600 font-bold">
-            Log Out
-          </button>
+        <div className="flex justify-between items-center bg-white border px-5 py-2.5 rounded-full shadow-sm max-w-lg mx-auto text-xs">
+          {isAuthenticated && user ? (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="font-semibold text-slate-700">Signed in as {user.email}</span>
+              </div>
+              <button onClick={logout} className="text-slate-500 hover:text-red-600 font-bold">
+                Log Out
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                <span className="font-semibold text-slate-700">PathWise AI Platform</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Link to="/login" className="text-blue-600 hover:underline font-bold">
+                  Sign In
+                </Link>
+                <Link to="/register" className="bg-blue-600 text-white px-3 py-1 rounded-full font-bold hover:bg-blue-700">
+                  Sign Up
+                </Link>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Engine & DB Status Badge */}
@@ -69,21 +103,46 @@ export default function Landing() {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-3 justify-center items-center pt-2">
-          <Link to="/dashboard">
-            <Button size="lg" className="text-base px-8 bg-blue-600 hover:bg-blue-700 font-bold shadow-md">
-              Go to Dashboard &rarr;
-            </Button>
-          </Link>
-          <Link to="/onboarding">
-            <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
-              + Generate New Roadmap
-            </Button>
-          </Link>
-          <Link to="/skill-graph">
-            <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
-              🕸️ Skill DAG
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/dashboard">
+                <Button size="lg" className="text-base px-8 bg-blue-600 hover:bg-blue-700 font-bold shadow-md">
+                  Go to Dashboard &rarr;
+                </Button>
+              </Link>
+              <Link to="/onboarding">
+                <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
+                  + Generate New Roadmap
+                </Button>
+              </Link>
+              <Link to="/skill-graph">
+                <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
+                  🕸️ Skill DAG
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Button 
+                onClick={handleInstantDemo} 
+                disabled={demoLoading}
+                size="lg" 
+                className="text-base px-8 bg-blue-600 hover:bg-blue-700 font-bold shadow-md"
+              >
+                {demoLoading ? 'Launching Demo...' : '⚡ Try Instant Demo (1-Click) 🚀'}
+              </Button>
+              <Link to="/register">
+                <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
+                  Create Free Account
+                </Button>
+              </Link>
+              <Link to="/login">
+                <Button size="lg" variant="ghost" className="text-base px-4 font-semibold text-slate-600">
+                  Sign In &rarr;
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Stats & Career Tracks Overview */}

@@ -1,0 +1,1 @@
+﻿import { test, expect } from "@playwright/test"; test.describe("Pathwise flow", () => { test("full flow", async ({ page }) => { await page.goto("/"); await expect(page.getByText(/Your AI-Powered Career/i)).toBeVisible(); }); });

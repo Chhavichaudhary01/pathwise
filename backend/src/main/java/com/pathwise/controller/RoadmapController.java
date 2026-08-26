@@ -39,7 +39,7 @@ public class RoadmapController {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Roadmap> roadmaps = roadmapRepository.findByUserId(userDetails.getId());
         List<RoadmapResponse> dtos = roadmaps.stream()
-                .map(this::toSummaryDto)
+                .map(this::toResponseDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
@@ -50,10 +50,7 @@ public class RoadmapController {
         return roadmapRepository.findByIdWithDetails(id)
                 .map(this::toResponseDto)
                 .map(ResponseEntity::ok)
-                .orElseGet(() -> roadmapRepository.findById(id)
-                        .map(this::toResponseDto)
-                        .map(ResponseEntity::ok)
-                        .orElse(ResponseEntity.notFound().build()));
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping("/generate")
@@ -92,7 +89,7 @@ public class RoadmapController {
         // 3. Partition into Milestones (Phases)
         int count = sequence.size();
         int chunkSize = Math.max(1, (int) Math.ceil((double) count / 3.0));
-        List<Milestone> milestones = new ArrayList<>();
+        Set<Milestone> milestones = new LinkedHashSet<>();
 
         int milestoneIdx = 1;
         for (int i = 0; i < count; i += chunkSize) {
@@ -110,7 +107,7 @@ public class RoadmapController {
                     .title(phaseTitle)
                     .description("Progressive milestones to build prerequisite competencies toward your goal.")
                     .orderIndex(milestoneIdx++)
-                    .items(new ArrayList<>())
+                    .items(new LinkedHashSet<>())
                     .build();
 
             int itemIdx = 1;
@@ -150,7 +147,7 @@ public class RoadmapController {
         }
     }
 
-    @PatchMapping("/items/{itemId}/status")
+    @RequestMapping(value = "/items/{itemId}/status", method = {RequestMethod.PATCH, RequestMethod.POST, RequestMethod.PUT})
     @Transactional
     public ResponseEntity<?> updateItemStatus(@PathVariable UUID itemId, @RequestBody Map<String, String> body) {
         String newStatus = body.getOrDefault("status", "COMPLETED");
@@ -255,14 +252,29 @@ public class RoadmapController {
                         CatalogItem ci = ri.getCatalogItem();
                         CatalogItemDto ciDto = null;
                         if (ci != null) {
-                            List<String> skillNames = new ArrayList<>();
+                            List<String> skills = new ArrayList<>();
                             if (ci.getItemSkills() != null) {
-                                skillNames = ci.getItemSkills().stream()
-                                        .filter(cis -> cis.getSkill() != null)
-                                        .map(cis -> cis.getSkill().getName())
-                                        .distinct()
-                                        .collect(Collectors.toList());
+                                for (CatalogItemSkill cis : ci.getItemSkills()) {
+                                    if (cis.getSkill() != null && cis.getSkill().getName() != null) {
+                                        skills.add(cis.getSkill().getName());
+                                    }
+                                }
                             }
+                            if (skills.isEmpty()) {
+                                if (ci.getTitle() != null) {
+                                    if (ci.getTitle().toLowerCase().contains("html")) skills.add("HTML5");
+                                    if (ci.getTitle().toLowerCase().contains("css")) skills.add("CSS3");
+                                    if (ci.getTitle().toLowerCase().contains("javascript") || ci.getTitle().toLowerCase().contains("js")) skills.add("JavaScript");
+                                    if (ci.getTitle().toLowerCase().contains("react")) skills.add("React");
+                                    if (ci.getTitle().toLowerCase().contains("sql")) skills.add("SQL");
+                                    if (ci.getTitle().toLowerCase().contains("python")) skills.add("Python");
+                                    if (ci.getTitle().toLowerCase().contains("learning") || ci.getTitle().toLowerCase().contains("ml")) skills.add("Machine Learning");
+                                }
+                            }
+                            if (skills.isEmpty()) {
+                                skills.add("Core Competency");
+                            }
+
                             ciDto = CatalogItemDto.builder()
                                     .id(ci.getId())
                                     .title(ci.getTitle())
@@ -272,7 +284,7 @@ public class RoadmapController {
                                     .provider(ci.getProvider())
                                     .difficulty(ci.getDifficulty())
                                     .url(ci.getUrl())
-                                    .skills(skillNames)
+                                    .skills(skills)
                                     .build();
                         }
 

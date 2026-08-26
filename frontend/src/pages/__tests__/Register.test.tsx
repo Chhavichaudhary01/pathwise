@@ -1,0 +1,1 @@
+﻿import { render, screen } from "@testing-library/react"; import { BrowserRouter } from "react-router-dom"; import Register from "../Register"; import { test, expect } from "vitest"; test("renders register", () => { render(<BrowserRouter><Register /></BrowserRouter>); expect(screen.getByText(/Create an account/i)).toBeInTheDocument(); });

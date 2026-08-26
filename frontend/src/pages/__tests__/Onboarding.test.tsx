@@ -1,0 +1,1 @@
+﻿import { render, screen } from "@testing-library/react"; import { BrowserRouter } from "react-router-dom"; import Onboarding from "../Onboarding"; import { test, expect } from "vitest"; test("renders onboarding", () => { render(<BrowserRouter><Onboarding /></BrowserRouter>); expect(screen.getByText(/plan your journey/i)).toBeInTheDocument(); });

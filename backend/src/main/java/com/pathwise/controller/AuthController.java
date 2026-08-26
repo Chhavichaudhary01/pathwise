@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping({"/api/v1/auth", "/api/auth"})
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthenticationManager authenticationManager;
@@ -43,14 +43,49 @@ public class AuthController {
         return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userDetails.getId(), userDetails.getUsername()));
     }
 
+    private final com.pathwise.repository.LearnerProfileRepository learnerProfileRepository;
+
+    @PostMapping("/demo")
+    public ResponseEntity<?> demoLogin() {
+        String demoEmail = "demo@pathwise.io";
+        String demoPassword = "DemoPassword123!";
+
+        User user = userRepository.findByEmail(demoEmail).orElseGet(() -> {
+            User newUser = User.builder()
+                    .email(demoEmail)
+                    .password(encoder.encode(demoPassword))
+                    .build();
+            return userRepository.save(newUser);
+        });
+
+        // Ensure demo profile exists
+        if (!learnerProfileRepository.existsByUserId(user.getId())) {
+            com.pathwise.domain.LearnerProfile profile = com.pathwise.domain.LearnerProfile.builder()
+                    .user(user)
+                    .goal("Full Stack Web Developer with React & Spring Boot")
+                    .currentSkills("[\"html\", \"css\", \"js\"]")
+                    .interests("[\"Web Development\", \"Cloud Architecture\"]")
+                    .weeklyHours(10)
+                    .learningStyle("hands-on")
+                    .build();
+            learnerProfileRepository.save(profile);
+        }
+
+        String jwt = jwtUtils.generateTokenFromUsername(user.getEmail());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), user.getId(), user.getEmail()));
+    }
+
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+        String email = signUpRequest.getEmail() != null ? signUpRequest.getEmail().trim().toLowerCase() : "";
+        if (userRepository.existsByEmail(email)) {
             return ResponseEntity.badRequest().body(new MessageResponse("Error: Email is already in use!"));
         }
 
         User user = User.builder()
-                .email(signUpRequest.getEmail())
+                .email(email)
                 .password(encoder.encode(signUpRequest.getPassword()))
                 .build();
 
