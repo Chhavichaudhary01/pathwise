@@ -21,19 +21,32 @@ public class RoadmapScraperService {
     // Curated high-fidelity knowledge index for granular documentation & topic guides
     private static final Map<String, GranularSkillMeta> GRANULAR_SKILLS = new LinkedHashMap<>();
 
+    private static final Set<String> VERIFIED_SLUGS = Set.of(
+            "frontend", "backend", "full-stack", "devops", "ai-engineer", "ai-data-scientist",
+            "data-analyst", "android", "ios", "react", "vue", "angular", "nextjs", "typescript",
+            "javascript", "nodejs", "python", "java", "golang", "rust", "cpp", "spring-boot",
+            "sql", "postgresql-dba", "mongodb", "redis", "graphql", "docker", "kubernetes", "aws",
+            "git-github", "linux", "system-design", "software-design-architecture", "cyber-security",
+            "prompt-engineering", "qa", "flutter", "react-native", "html", "mlops", "machine-learning",
+            "php", "ruby", "ruby-on-rails", "scala", "terraform", "aspnet-core"
+    );
+
     static {
         // Frontend & Web
-        addSkill("html", "HTML5 Semantics & Structure", "https://developer.mozilla.org/en-US/docs/Web/HTML", "MDN Web Docs", "https://roadmap.sh/frontend");
+        addSkill("html", "HTML5 Semantics & Structure", "https://developer.mozilla.org/en-US/docs/Web/HTML", "MDN Web Docs", "https://roadmap.sh/html");
         addSkill("css", "CSS3 Modern Layouts (Flexbox/Grid)", "https://developer.mozilla.org/en-US/docs/Web/CSS", "MDN Web Docs", "https://roadmap.sh/frontend");
         addSkill("javascript", "Modern JavaScript (ES6+)", "https://developer.mozilla.org/en-US/docs/Web/JavaScript", "MDN Web Docs", "https://roadmap.sh/javascript");
         addSkill("typescript", "TypeScript Handbook & Type System", "https://www.typescriptlang.org/docs/handbook/intro.html", "TypeScript Official", "https://roadmap.sh/typescript");
         addSkill("react", "React.dev Core & Hooks", "https://react.dev/learn", "React Official Docs", "https://roadmap.sh/react");
         addSkill("next.js", "Next.js App Router & Server Components", "https://nextjs.org/docs", "Vercel Official", "https://roadmap.sh/nextjs");
         addSkill("vue", "Vue 3 Composition API", "https://vuejs.org/guide/introduction.html", "Vue.js Official", "https://roadmap.sh/vue");
+        addSkill("angular", "Angular Docs & Architecture", "https://angular.dev", "Angular Official", "https://roadmap.sh/angular");
         addSkill("tailwind", "Tailwind CSS Utility-First Styling", "https://tailwindcss.com/docs", "Tailwind Official", "https://roadmap.sh/frontend");
-        addSkill("web performance", "Web Vitals & Performance Optimization", "https://web.dev/learn/performance", "Google Web.dev", "https://roadmap.sh/frontend");
-        addSkill("accessibility", "Web Accessibility (a11y) Guidelines", "https://www.w3.org/WAI/fundamentals/accessibility-intro/", "W3C WAI", "https://roadmap.sh/frontend");
-        addSkill("jest", "Testing with Jest & React Testing Library", "https://jestjs.io/docs/getting-started", "Jest Official", "https://roadmap.sh/javascript");
+        addSkill("web performance", "Web Vitals & Performance Optimization", "https://web.dev/learn/performance", "Google Web.dev", "https://roadmap.sh/frontend-performance-best-practices");
+        addSkill("performance", "Frontend Performance Best Practices", "https://web.dev/learn/performance", "Web.dev", "https://roadmap.sh/frontend-performance-best-practices");
+        addSkill("accessibility", "Web Accessibility (a11y) Guidelines", "https://www.w3.org/WAI/fundamentals/accessibility-intro/", "W3C WAI", "https://roadmap.sh/projects/accessible-form-ui");
+        addSkill("a11y", "Web Accessibility (a11y) Guidelines", "https://www.w3.org/WAI/fundamentals/accessibility-intro/", "W3C WAI", "https://roadmap.sh/projects/accessible-form-ui");
+        addSkill("jest", "Testing with Jest & React Testing Library", "https://jestjs.io/docs/getting-started", "Jest Official", "https://roadmap.sh/qa");
         addSkill("playwright", "End-to-End Testing with Playwright", "https://playwright.dev/docs/intro", "Microsoft Playwright", "https://roadmap.sh/qa");
 
         // Backend & Systems
@@ -42,31 +55,35 @@ public class RoadmapScraperService {
         addSkill("spring boot", "Spring Boot Guides & Reference", "https://spring.io/guides", "Spring by VMware", "https://roadmap.sh/spring-boot");
         addSkill("java", "Java SE Development Guide", "https://docs.oracle.com/en/java/javase/21/", "Oracle Java", "https://roadmap.sh/java");
         addSkill("go", "Tour of Go & Go Documentation", "https://go.dev/doc/", "Go.dev", "https://roadmap.sh/golang");
+        addSkill("golang", "Go Programming Language", "https://go.dev/doc/", "Go.dev", "https://roadmap.sh/golang");
         addSkill("rust", "The Rust Programming Language Book", "https://doc.rust-lang.org/book/", "Rust Official", "https://roadmap.sh/rust");
         addSkill("c++", "C++ Reference & Modern Best Practices", "https://en.cppreference.com/w/", "CppReference", "https://roadmap.sh/cpp");
+        addSkill("cpp", "C++ Reference & Modern Best Practices", "https://en.cppreference.com/w/", "CppReference", "https://roadmap.sh/cpp");
         addSkill("c#", ".NET & C# Documentation", "https://learn.microsoft.com/en-us/dotnet/csharp/", "Microsoft Learn", "https://roadmap.sh/aspnet-core");
 
         // Databases & Storage
         addSkill("sql", "SQL Tutorial & Relational Modeling", "https://www.postgresql.org/docs/current/tutorial-sql.html", "PostgreSQL Tutorial", "https://roadmap.sh/sql");
-        addSkill("postgresql", "PostgreSQL Official Manual", "https://www.postgresql.org/docs/current/", "PostgreSQL.org", "https://roadmap.sh/postgresql");
+        addSkill("postgresql", "PostgreSQL Database Development", "https://www.postgresql.org/docs/current/", "PostgreSQL.org", "https://roadmap.sh/sql");
+        addSkill("postgres", "PostgreSQL Database Development", "https://www.postgresql.org/docs/current/", "PostgreSQL.org", "https://roadmap.sh/sql");
         addSkill("mongodb", "MongoDB Manual & Aggregation", "https://www.mongodb.com/docs/manual/", "MongoDB Docs", "https://roadmap.sh/mongodb");
         addSkill("redis", "Redis In-Memory Data Structures", "https://redis.io/docs/latest/", "Redis.io", "https://roadmap.sh/redis");
         addSkill("graphql", "GraphQL Official Specification & Schema", "https://graphql.org/learn/", "GraphQL Foundation", "https://roadmap.sh/graphql");
-        addSkill("rest api", "RESTful API Design & Best Practices", "https://restfulapi.net/", "REST API Guide", "https://roadmap.sh/backend");
+        addSkill("rest api", "RESTful API Design & Best Practices", "https://restfulapi.net/", "REST API Guide", "https://roadmap.sh/questions/rest-api");
         addSkill("prisma", "Prisma ORM Documentation", "https://www.prisma.io/docs", "Prisma Docs", "https://roadmap.sh/nodejs");
 
         // DevOps, Cloud & Security
         addSkill("docker", "Docker Containerization Get-Started", "https://docs.docker.com/get-started/", "Docker Official", "https://roadmap.sh/docker");
         addSkill("kubernetes", "Kubernetes Production Orchestration", "https://kubernetes.io/docs/home/", "Kubernetes.io", "https://roadmap.sh/kubernetes");
         addSkill("aws", "AWS Cloud Architecture Center", "https://aws.amazon.com/architecture/", "AWS Architecture", "https://roadmap.sh/aws");
-        addSkill("git", "Pro Git Book & Interactive Guide", "https://git-scm.com/book/en/v2", "Git SCM", "https://roadmap.sh/git");
+        addSkill("git", "Git & GitHub Version Control", "https://git-scm.com/book/en/v2", "Git SCM", "https://roadmap.sh/git-github");
+        addSkill("github", "Git & GitHub Version Control", "https://git-scm.com/book/en/v2", "Git SCM", "https://roadmap.sh/git-github");
         addSkill("linux", "Linux Command Line & Kernel Basics", "https://linuxjourney.com/", "Linux Journey", "https://roadmap.sh/linux");
         addSkill("system design", "System Design Primer & Scalability Patterns", "https://github.com/donnemartin/system-design-primer", "GitHub / Donne Martin", "https://roadmap.sh/system-design");
-        addSkill("microservices", "Microservice Architecture & Patterns", "https://microservices.io/patterns/index.html", "Chris Richardson", "https://roadmap.sh/backend");
+        addSkill("microservices", "Microservice Architecture & Patterns", "https://microservices.io/patterns/index.html", "Chris Richardson", "https://roadmap.sh/system-design");
         addSkill("cybersecurity", "OWASP Top 10 Security Risks", "https://owasp.org/www-project-top-ten/", "OWASP Foundation", "https://roadmap.sh/cyber-security");
 
         // AI, Data Science & Machine Learning
-        addSkill("machine learning", "Scikit-Learn Machine Learning in Python", "https://scikit-learn.org/stable/user_guide.html", "Scikit-Learn", "https://roadmap.sh/ai-data-scientist");
+        addSkill("machine learning", "Scikit-Learn Machine Learning in Python", "https://scikit-learn.org/stable/user_guide.html", "Scikit-Learn", "https://roadmap.sh/machine-learning");
         addSkill("deep learning", "PyTorch Official Tutorials", "https://pytorch.org/tutorials/", "PyTorch.org", "https://roadmap.sh/ai-engineer");
         addSkill("tensorflow", "TensorFlow Core Tutorials", "https://www.tensorflow.org/tutorials", "TensorFlow.org", "https://roadmap.sh/ai-data-scientist");
         addSkill("langchain", "LangChain LLM Application Framework", "https://python.langchain.com/docs/get_started/introduction", "LangChain Docs", "https://roadmap.sh/ai-engineer");
@@ -95,19 +112,28 @@ public class RoadmapScraperService {
         // 1. Check for Hands-on Project specific pages on roadmap.sh
         if (lower.contains("project") || lower.contains("starter architecture")) {
             if (lower.contains("node") || lower.contains("backend") || lower.contains("express")) {
-                return "https://roadmap.sh/projects/backend-api";
+                return "https://roadmap.sh/projects/ecommerce-api";
             }
             if (lower.contains("react") || lower.contains("frontend") || lower.contains("ui")) {
                 return "https://roadmap.sh/projects/single-page-cv";
             }
             if (lower.contains("python") || lower.contains("django") || lower.contains("flask")) {
-                return "https://roadmap.sh/projects/url-shortener";
+                return "https://roadmap.sh/projects/url-shortening-service";
             }
             if (lower.contains("full") || lower.contains("stack")) {
                 return "https://roadmap.sh/projects/expense-tracker";
             }
             if (lower.contains("javascript") || lower.contains("js")) {
                 return "https://roadmap.sh/projects/todo-list-api";
+            }
+            if (lower.contains("html") || lower.contains("css")) {
+                return "https://roadmap.sh/projects/basic-html-website";
+            }
+            if (lower.contains("docker")) {
+                return "https://roadmap.sh/projects/dockerized-service-deployment";
+            }
+            if (lower.contains("redis") || lower.contains("caching")) {
+                return "https://roadmap.sh/projects/caching-server";
             }
             return "https://roadmap.sh/projects";
         }
@@ -124,16 +150,19 @@ public class RoadmapScraperService {
 
         // 2. Check for specific roadmap.sh guides/topics first
         if (cleanSkill.contains("rest") || cleanSkill.contains("api")) {
-            return "https://roadmap.sh/guides/rest-api-best-practices";
+            return "https://roadmap.sh/questions/rest-api";
         }
         if (cleanSkill.contains("microservice")) {
             return "https://roadmap.sh/system-design";
         }
         if (cleanSkill.contains("postgresql") || cleanSkill.contains("postgres")) {
-            return "https://roadmap.sh/postgresql";
+            return "https://roadmap.sh/sql";
         }
         if (cleanSkill.contains("performance")) {
-            return "https://roadmap.sh/frontend";
+            return "https://roadmap.sh/frontend-performance-best-practices";
+        }
+        if (cleanSkill.contains("accessibility") || cleanSkill.contains("a11y")) {
+            return "https://roadmap.sh/projects/accessible-form-ui";
         }
         if (cleanSkill.contains("test") || cleanSkill.contains("jest") || cleanSkill.contains("playwright")) {
             return "https://roadmap.sh/qa";
@@ -157,15 +186,18 @@ public class RoadmapScraperService {
         }
 
         String cleanSlug = cleanSkill.replaceAll("[^a-z0-9]+", "-");
-        if (cleanSlug.length() > 2) {
+        if (VERIFIED_SLUGS.contains(cleanSlug)) {
             return "https://roadmap.sh/" + cleanSlug;
         }
 
         if (fallbackRoadmapSlug != null && !fallbackRoadmapSlug.isBlank()) {
-            return "https://roadmap.sh/" + fallbackRoadmapSlug;
+            String fbSlug = fallbackRoadmapSlug.replaceAll("[^a-z0-9]+", "-");
+            if (VERIFIED_SLUGS.contains(fbSlug)) {
+                return "https://roadmap.sh/" + fbSlug;
+            }
         }
 
-        return "https://roadmap.sh";
+        return "https://roadmap.sh/roadmaps";
     }
 
     /**
