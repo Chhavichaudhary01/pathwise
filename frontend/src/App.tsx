@@ -4,6 +4,8 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import DashboardMyTask from './pages/DashboardMyTask';
+import DashboardCoursue from './pages/DashboardCoursue';
 import Onboarding from './pages/Onboarding';
 import RoadmapView from './pages/RoadmapView';
 import SkillGraphView from './pages/SkillGraphView';
@@ -12,11 +14,12 @@ import ChatView from './pages/ChatView';
 import SettingsView from './pages/SettingsView';
 import PublicVerification from './pages/PublicVerification';
 import FloatingAIAssistant from './components/FloatingAIAssistant';
+import AppLayout from './components/AppLayout';
 
-const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
+const ProtectedRoute = ({ children }: { children?: React.ReactElement }) => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return children;
+  return children ? children : <AppLayout />;
 };
 
 function App() {
@@ -25,19 +28,29 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify/:uuid" element={<PublicVerification />} />
         <Route path="/verify" element={<PublicVerification />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-        <Route path="/roadmap" element={<ProtectedRoute><RoadmapView /></ProtectedRoute>} />
-        <Route path="/roadmap/:id" element={<ProtectedRoute><RoadmapView /></ProtectedRoute>} />
-        <Route path="/skill-graph" element={<ProtectedRoute><SkillGraphView /></ProtectedRoute>} />
-        <Route path="/portfolio" element={<ProtectedRoute><PortfolioView /></ProtectedRoute>} />
-        <Route path="/chat" element={<ProtectedRoute><ChatView /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><SettingsView /></ProtectedRoute>} />
+
+        {/* Authenticated Protected Routes with Persistent AppLayout */}
+        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/projects" element={<RoadmapView />} />
+          <Route path="/my-task" element={<DashboardMyTask />} />
+          <Route path="/coursue" element={<DashboardCoursue />} />
+          <Route path="/lms" element={<DashboardCoursue />} />
+          <Route path="/roadmap" element={<RoadmapView />} />
+          <Route path="/roadmap/:id" element={<RoadmapView />} />
+          <Route path="/skill-graph" element={<SkillGraphView />} />
+          <Route path="/portfolio" element={<PortfolioView />} />
+          <Route path="/chat" element={<ChatView />} />
+          <Route path="/settings" element={<SettingsView />} />
+          <Route path="/onboarding" element={<Onboarding />} />
+        </Route>
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {isAuthenticated && <FloatingAIAssistant />}

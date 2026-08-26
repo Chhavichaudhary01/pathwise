@@ -66,15 +66,16 @@ export default function SettingsView() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        
-        {/* Navigation */}
-        <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600">
+    <div className="space-y-6 w-full max-w-4xl mx-auto">
+      
+      {/* Header */}
+      <div>
+        <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600 mb-1">
           &larr; Back to Dashboard
         </Button>
-
-        <h1 className="text-3xl font-extrabold text-slate-900">Account & Learning Settings</h1>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Account & Learning Settings</h1>
+        <p className="text-slate-500 text-xs mt-0.5">Manage your pacing constraints, profile preferences, and data privacy.</p>
+      </div>
 
         {/* Learning Preferences */}
         <Card className="border shadow-sm bg-white">
@@ -170,8 +171,6 @@ export default function SettingsView() {
             )}
           </CardContent>
         </Card>
-
-      </div>
     </div>
   );
 }

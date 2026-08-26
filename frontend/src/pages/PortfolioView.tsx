@@ -81,24 +81,23 @@ export default function PortfolioView() {
   const masteryPercent = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : (completedCount > 0 ? 100 : 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        
-        {/* Navigation & Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600">
-            &larr; Back to Dashboard
-          </Button>
+    <div className="space-y-6 w-full max-w-5xl mx-auto">
+      
+      {/* Navigation & Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600">
+          &larr; Back to Dashboard
+        </Button>
 
-          <div className="flex items-center gap-3">
-            <Button onClick={handleShare} variant="outline" className="text-sm font-semibold">
-              {copied ? '✓ Link Copied!' : '🔗 Copy Shareable Portfolio Link'}
-            </Button>
-            <Button onClick={() => window.print()} className="text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800">
-              📄 Export PDF
-            </Button>
-          </div>
+        <div className="flex items-center gap-3">
+          <Button onClick={handleShare} variant="outline" className="text-xs font-bold text-[#5051F9] bg-[#EDE9FE] border-purple-200 rounded-full shadow-2xs">
+            {copied ? '✓ Link Copied!' : '🔗 Copy Shareable Portfolio Link'}
+          </Button>
+          <Button onClick={() => window.print()} className="text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 rounded-full shadow-xs">
+            📄 Export PDF
+          </Button>
         </div>
+      </div>
 
         {/* Portfolio Hero Banner */}
         <Card className="border-none shadow-sm bg-gradient-to-r from-slate-900 to-blue-950 text-white p-6 md:p-8">
@@ -191,8 +190,6 @@ export default function PortfolioView() {
             )}
           </CardContent>
         </Card>
-
-      </div>
     </div>
   );
 }

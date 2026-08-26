@@ -323,22 +323,21 @@ export default function RoadmapView() {
   const totalHours = allItems.reduce((acc, curr) => acc + (curr.catalogItem?.estimatedHours || 5), 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        
-        {/* Navigation & Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600">
-              &larr; Dashboard
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/skill-graph')} className="text-xs font-semibold">
-              🕸️ View Skill Graph (DAG)
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/portfolio')} className="text-xs font-semibold">
-              📜 Mastery Portfolio
-            </Button>
-          </div>
+    <div className="space-y-6 w-full max-w-5xl mx-auto">
+      
+      {/* Navigation & Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600">
+            &larr; Dashboard
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/skill-graph')} className="text-xs font-bold text-[#5051F9] bg-[#EDE9FE] border-purple-200 rounded-full">
+            🕸️ View Skill Graph (DAG)
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/portfolio')} className="text-xs font-bold rounded-full">
+            📜 Mastery Portfolio
+          </Button>
+        </div>
           
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold text-slate-700">Progress: {progressPercent}%</span>
@@ -625,7 +624,6 @@ export default function RoadmapView() {
           </div>
         )}
 
-      </div>
     </div>
   );
 }

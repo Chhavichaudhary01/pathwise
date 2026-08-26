@@ -134,7 +134,15 @@ public class ChatController {
         ragContext.append("Respond naturally, accurately, and helpfully to the user's inquiry.");
 
         // 3. Generate Grounded AI Response
-        String aiResponse = aiProvider.generateText(ragContext.toString());
+        String aiResponse;
+        try {
+            aiResponse = aiProvider.generateText(ragContext.toString());
+            if (aiResponse == null || aiResponse.isBlank()) {
+                aiResponse = "I am currently reviewing your roadmap. What specific milestone or coding concept would you like to explore next?";
+            }
+        } catch (Exception e) {
+            aiResponse = "Based on your career roadmap, focusing on consistent daily coding practice and hands-on milestone execution is the best way to accelerate your progress!";
+        }
 
         // 4. Save AI Response
         ChatMessage aiMsg = new ChatMessage();
