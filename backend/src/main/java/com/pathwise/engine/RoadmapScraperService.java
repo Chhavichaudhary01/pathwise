@@ -99,17 +99,127 @@ public class RoadmapScraperService {
 
     private record GranularSkillMeta(String title, String docUrl, String provider, String roadmapShUrl) {}
 
+    // Set of verified standalone dedicated roadmap.sh pages
+    private static final Map<String, String> DEDICATED_TOPIC_PAGES = new LinkedHashMap<>();
+
+    static {
+        // Frontend & Web
+        DEDICATED_TOPIC_PAGES.put("html", "https://roadmap.sh/html");
+        DEDICATED_TOPIC_PAGES.put("javascript", "https://roadmap.sh/javascript");
+        DEDICATED_TOPIC_PAGES.put("typescript", "https://roadmap.sh/typescript");
+        DEDICATED_TOPIC_PAGES.put("react", "https://roadmap.sh/react");
+        DEDICATED_TOPIC_PAGES.put("next.js", "https://roadmap.sh/nextjs");
+        DEDICATED_TOPIC_PAGES.put("nextjs", "https://roadmap.sh/nextjs");
+        DEDICATED_TOPIC_PAGES.put("vue", "https://roadmap.sh/vue");
+        DEDICATED_TOPIC_PAGES.put("angular", "https://roadmap.sh/angular");
+        DEDICATED_TOPIC_PAGES.put("qa", "https://roadmap.sh/qa");
+
+        // Backend & Languages
+        DEDICATED_TOPIC_PAGES.put("node.js", "https://roadmap.sh/nodejs");
+        DEDICATED_TOPIC_PAGES.put("nodejs", "https://roadmap.sh/nodejs");
+        DEDICATED_TOPIC_PAGES.put("python", "https://roadmap.sh/python");
+        DEDICATED_TOPIC_PAGES.put("spring boot", "https://roadmap.sh/spring-boot");
+        DEDICATED_TOPIC_PAGES.put("spring-boot", "https://roadmap.sh/spring-boot");
+        DEDICATED_TOPIC_PAGES.put("java", "https://roadmap.sh/java");
+        DEDICATED_TOPIC_PAGES.put("go", "https://roadmap.sh/golang");
+        DEDICATED_TOPIC_PAGES.put("golang", "https://roadmap.sh/golang");
+        DEDICATED_TOPIC_PAGES.put("rust", "https://roadmap.sh/rust");
+        DEDICATED_TOPIC_PAGES.put("c++", "https://roadmap.sh/cpp");
+        DEDICATED_TOPIC_PAGES.put("cpp", "https://roadmap.sh/cpp");
+        DEDICATED_TOPIC_PAGES.put("c#", "https://roadmap.sh/aspnet-core");
+        DEDICATED_TOPIC_PAGES.put("aspnet-core", "https://roadmap.sh/aspnet-core");
+        DEDICATED_TOPIC_PAGES.put("php", "https://roadmap.sh/php");
+        DEDICATED_TOPIC_PAGES.put("ruby", "https://roadmap.sh/ruby");
+        DEDICATED_TOPIC_PAGES.put("ruby on rails", "https://roadmap.sh/ruby-on-rails");
+        DEDICATED_TOPIC_PAGES.put("scala", "https://roadmap.sh/scala");
+
+        // Databases & Storage
+        DEDICATED_TOPIC_PAGES.put("sql", "https://roadmap.sh/sql");
+        DEDICATED_TOPIC_PAGES.put("postgresql-dba", "https://roadmap.sh/postgresql-dba");
+        DEDICATED_TOPIC_PAGES.put("mongodb", "https://roadmap.sh/mongodb");
+        DEDICATED_TOPIC_PAGES.put("redis", "https://roadmap.sh/redis");
+        DEDICATED_TOPIC_PAGES.put("graphql", "https://roadmap.sh/graphql");
+
+        // DevOps & Infrastructure
+        DEDICATED_TOPIC_PAGES.put("docker", "https://roadmap.sh/docker");
+        DEDICATED_TOPIC_PAGES.put("kubernetes", "https://roadmap.sh/kubernetes");
+        DEDICATED_TOPIC_PAGES.put("aws", "https://roadmap.sh/aws");
+        DEDICATED_TOPIC_PAGES.put("git", "https://roadmap.sh/git-github");
+        DEDICATED_TOPIC_PAGES.put("github", "https://roadmap.sh/git-github");
+        DEDICATED_TOPIC_PAGES.put("linux", "https://roadmap.sh/linux");
+        DEDICATED_TOPIC_PAGES.put("terraform", "https://roadmap.sh/terraform");
+        DEDICATED_TOPIC_PAGES.put("system design", "https://roadmap.sh/system-design");
+        DEDICATED_TOPIC_PAGES.put("software design architecture", "https://roadmap.sh/software-design-architecture");
+        DEDICATED_TOPIC_PAGES.put("cybersecurity", "https://roadmap.sh/cyber-security");
+        DEDICATED_TOPIC_PAGES.put("cyber security", "https://roadmap.sh/cyber-security");
+
+        // Mobile & AI
+        DEDICATED_TOPIC_PAGES.put("flutter", "https://roadmap.sh/flutter");
+        DEDICATED_TOPIC_PAGES.put("react native", "https://roadmap.sh/react-native");
+        DEDICATED_TOPIC_PAGES.put("prompt engineering", "https://roadmap.sh/prompt-engineering");
+        DEDICATED_TOPIC_PAGES.put("machine learning", "https://roadmap.sh/machine-learning");
+        DEDICATED_TOPIC_PAGES.put("mlops", "https://roadmap.sh/mlops");
+    }
+
     /**
-     * Resolves the exact specific roadmap.sh page for a skill or project card.
+     * Resolves root roadmap page for the overarching career/domain.
+     */
+    public String resolveRootRoadmapUrl(String fallbackGoalOrRoadmap) {
+        if (fallbackGoalOrRoadmap == null || fallbackGoalOrRoadmap.isBlank()) {
+            return "https://roadmap.sh/roadmaps";
+        }
+        String lower = fallbackGoalOrRoadmap.toLowerCase();
+        if (lower.contains("frontend") || lower.contains("web") || lower.contains("ui")) {
+            return "https://roadmap.sh/frontend";
+        }
+        if (lower.contains("backend") || lower.contains("server") || lower.contains("api")) {
+            return "https://roadmap.sh/backend";
+        }
+        if (lower.contains("full") || lower.contains("stack")) {
+            return "https://roadmap.sh/full-stack";
+        }
+        if (lower.contains("devops") || lower.contains("cloud") || lower.contains("sre") || lower.contains("platform") || lower.contains("infrastructure")) {
+            return "https://roadmap.sh/devops";
+        }
+        if (lower.contains("ai") || lower.contains("machine learning") || lower.contains("llm") || lower.contains("data science")) {
+            return "https://roadmap.sh/ai-engineer";
+        }
+        if (lower.contains("android") || lower.contains("mobile") || lower.contains("kotlin")) {
+            return "https://roadmap.sh/android";
+        }
+        if (lower.contains("ios") || lower.contains("swift") || lower.contains("apple")) {
+            return "https://roadmap.sh/ios";
+        }
+        if (lower.contains("data") || lower.contains("analytics")) {
+            return "https://roadmap.sh/data-analyst";
+        }
+        if (lower.contains("qa") || lower.contains("test")) {
+            return "https://roadmap.sh/qa";
+        }
+        if (lower.contains("security") || lower.contains("cyber")) {
+            return "https://roadmap.sh/cyber-security";
+        }
+        if (lower.contains("game")) {
+            return "https://roadmap.sh/game-developer";
+        }
+        return "https://roadmap.sh/roadmaps";
+    }
+
+    /**
+     * Resolves the exact roadmap.sh page for a skill card:
+     * - Shows dedicated standalone page if one exists.
+     * - Falls back to the root roadmap page if no standalone page exists (avoiding 404s).
      */
     public String resolveSpecificRoadmapShUrl(String titleOrSkill, String fallbackRoadmapSlug) {
+        String rootRoadmapUrl = resolveRootRoadmapUrl(fallbackRoadmapSlug);
+
         if (titleOrSkill == null || titleOrSkill.isBlank()) {
-            return "https://roadmap.sh";
+            return rootRoadmapUrl;
         }
 
         String lower = titleOrSkill.toLowerCase().trim();
 
-        // 1. Check for Hands-on Project specific pages on roadmap.sh
+        // 1. Check for dedicated Hands-on Project specific pages on roadmap.sh
         if (lower.contains("project") || lower.contains("starter architecture")) {
             if (lower.contains("node") || lower.contains("backend") || lower.contains("express")) {
                 return "https://roadmap.sh/projects/ecommerce-api";
@@ -135,7 +245,7 @@ public class RoadmapScraperService {
             if (lower.contains("redis") || lower.contains("caching")) {
                 return "https://roadmap.sh/projects/caching-server";
             }
-            return "https://roadmap.sh/projects";
+            return rootRoadmapUrl;
         }
 
         // 2. Clean title: strip "Mastering ", "Fundamentals of ", etc.
@@ -148,56 +258,25 @@ public class RoadmapScraperService {
                 .replace("core competencies for", "")
                 .trim();
 
-        // 2. Check for specific roadmap.sh guides/topics first
-        if (cleanSkill.contains("rest") || cleanSkill.contains("api")) {
-            return "https://roadmap.sh/questions/rest-api";
-        }
-        if (cleanSkill.contains("microservice")) {
-            return "https://roadmap.sh/system-design";
-        }
-        if (cleanSkill.contains("postgresql") || cleanSkill.contains("postgres")) {
-            return "https://roadmap.sh/sql";
-        }
-        if (cleanSkill.contains("performance")) {
-            return "https://roadmap.sh/frontend-performance-best-practices";
-        }
-        if (cleanSkill.contains("accessibility") || cleanSkill.contains("a11y")) {
-            return "https://roadmap.sh/projects/accessible-form-ui";
-        }
-        if (cleanSkill.contains("test") || cleanSkill.contains("jest") || cleanSkill.contains("playwright")) {
-            return "https://roadmap.sh/qa";
-        }
+        // 3. Match dedicated standalone topic page (longest match first with word-boundary check)
+        List<Map.Entry<String, String>> sortedTopics = new ArrayList<>(DEDICATED_TOPIC_PAGES.entrySet());
+        sortedTopics.sort((a, b) -> Integer.compare(b.getKey().length(), a.getKey().length()));
 
-        // 3. Match from granular index (longest key match first with word-boundary safety)
-        List<Map.Entry<String, GranularSkillMeta>> sortedEntries = new ArrayList<>(GRANULAR_SKILLS.entrySet());
-        sortedEntries.sort((a, b) -> Integer.compare(b.getKey().length(), a.getKey().length()));
-
-        for (Map.Entry<String, GranularSkillMeta> entry : sortedEntries) {
+        for (Map.Entry<String, String> entry : sortedTopics) {
             String key = entry.getKey();
             if (key.length() <= 3) {
                 if (cleanSkill.equals(key) || cleanSkill.matches(".*\\b" + java.util.regex.Pattern.quote(key) + "\\b.*")) {
-                    return entry.getValue().roadmapShUrl();
+                    return entry.getValue();
                 }
             } else {
                 if (cleanSkill.contains(key)) {
-                    return entry.getValue().roadmapShUrl();
+                    return entry.getValue();
                 }
             }
         }
 
-        String cleanSlug = cleanSkill.replaceAll("[^a-z0-9]+", "-");
-        if (VERIFIED_SLUGS.contains(cleanSlug)) {
-            return "https://roadmap.sh/" + cleanSlug;
-        }
-
-        if (fallbackRoadmapSlug != null && !fallbackRoadmapSlug.isBlank()) {
-            String fbSlug = fallbackRoadmapSlug.replaceAll("[^a-z0-9]+", "-");
-            if (VERIFIED_SLUGS.contains(fbSlug)) {
-                return "https://roadmap.sh/" + fbSlug;
-            }
-        }
-
-        return "https://roadmap.sh/roadmaps";
+        // 4. If no dedicated standalone page exists on roadmap.sh, return the root roadmap page
+        return rootRoadmapUrl;
     }
 
     /**
