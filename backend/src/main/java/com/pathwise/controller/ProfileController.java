@@ -8,6 +8,7 @@ import com.pathwise.repository.LearnerProfileRepository;
 import com.pathwise.repository.RoadmapRepository;
 import com.pathwise.repository.UserRepository;
 import com.pathwise.security.UserDetailsImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +33,8 @@ public class ProfileController {
     private final RoadmapRepository roadmapRepository;
     private final ChatMessageRepository chatMessageRepository;
 
+    private final ObjectMapper objectMapper;
+
     @GetMapping
     public ResponseEntity<LearnerProfile> getProfile() {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -41,18 +44,40 @@ public class ProfileController {
     }
 
     @PostMapping
-    public ResponseEntity<LearnerProfile> createOrUpdateProfile(@RequestBody LearnerProfile newProfile) {
+    public ResponseEntity<LearnerProfile> createOrUpdateProfile(@RequestBody com.pathwise.dto.ProfileRequest newProfile) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userRepository.findById(userDetails.getId()).orElseThrow();
         
         LearnerProfile profile = profileRepository.findByUserId(userDetails.getId()).orElse(new LearnerProfile());
         profile.setUser(user);
-        profile.setGoal(newProfile.getGoal());
-        profile.setCurrentSkills(newProfile.getCurrentSkills());
-        profile.setInterests(newProfile.getInterests());
-        profile.setLearningHistory(newProfile.getLearningHistory());
-        profile.setWeeklyHours(newProfile.getWeeklyHours() != null ? newProfile.getWeeklyHours() : 10);
-        profile.setLearningStyle(newProfile.getLearningStyle() != null ? newProfile.getLearningStyle() : "hands-on");
+        if (newProfile.getGoal() != null && !newProfile.getGoal().isBlank()) {
+            profile.setGoal(newProfile.getGoal());
+        }
+        if (newProfile.getCurrentSkills() != null) {
+            profile.setCurrentSkills(newProfile.getCurrentSkillsJson(objectMapper));
+        } else if (profile.getCurrentSkills() == null) {
+            profile.setCurrentSkills("[]");
+        }
+        if (newProfile.getInterests() != null) {
+            profile.setInterests(newProfile.getInterestsJson(objectMapper));
+        } else if (profile.getInterests() == null) {
+            profile.setInterests("[]");
+        }
+        if (newProfile.getLearningHistory() != null) {
+            profile.setLearningHistory(newProfile.getLearningHistoryJson(objectMapper));
+        } else if (profile.getLearningHistory() == null) {
+            profile.setLearningHistory("[]");
+        }
+        if (newProfile.getWeeklyHours() != null) {
+            profile.setWeeklyHours(newProfile.getWeeklyHours());
+        } else if (profile.getWeeklyHours() == null) {
+            profile.setWeeklyHours(10);
+        }
+        if (newProfile.getLearningStyle() != null && !newProfile.getLearningStyle().isBlank()) {
+            profile.setLearningStyle(newProfile.getLearningStyle());
+        } else if (profile.getLearningStyle() == null) {
+            profile.setLearningStyle("hands-on");
+        }
         
         return ResponseEntity.ok(profileRepository.save(profile));
     }

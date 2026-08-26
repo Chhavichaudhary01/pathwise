@@ -1,24 +1,20 @@
 package com.pathwise.controller;
 
 import com.pathwise.ai.AiProvider;
-import com.pathwise.domain.ChatMessage;
-import com.pathwise.domain.LearnerProfile;
-import com.pathwise.domain.Roadmap;
-import com.pathwise.domain.User;
+import com.pathwise.domain.*;
+import com.pathwise.dto.ChatMessageDto;
 import com.pathwise.dto.ChatRequest;
-import com.pathwise.repository.ChatMessageRepository;
-import com.pathwise.repository.LearnerProfileRepository;
-import com.pathwise.repository.RoadmapRepository;
-import com.pathwise.repository.UserRepository;
+import com.pathwise.repository.*;
 import com.pathwise.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -34,47 +30,133 @@ public class ChatController {
     private final AiProvider aiProvider;
 
     @GetMapping
-    public ResponseEntity<List<ChatMessage>> getChatHistory() {
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<ChatMessageDto>> getChatHistory() {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return ResponseEntity.ok(chatMessageRepository.findByUserIdOrderByCreatedAtAsc(userDetails.getId()));
+        List<ChatMessage> messages = chatMessageRepository.findByUserIdOrderByCreatedAtAsc(userDetails.getId());
+        List<ChatMessageDto> dtos = messages.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @PostMapping
-    public ResponseEntity<ChatMessage> sendMessage(@RequestBody ChatRequest request) {
+    @Transactional
+    public ResponseEntity<ChatMessageDto> sendMessage(@RequestBody ChatRequest request) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userRepository.findById(userDetails.getId()).orElseThrow();
 
+        // 1. Save User Message
         ChatMessage userMsg = new ChatMessage();
         userMsg.setUser(user);
         userMsg.setRole("user");
         userMsg.setContent(request.getMessage());
         chatMessageRepository.save(userMsg);
 
-        // Ground prompt in user profile and active roadmap
+        // 2. Comprehensive RAG Context Assembly
         Optional<LearnerProfile> profileOpt = profileRepository.findByUserId(user.getId());
         List<Roadmap> roadmaps = roadmapRepository.findByUserId(user.getId());
+        List<ChatMessage> history = chatMessageRepository.findByUserIdOrderByCreatedAtAsc(user.getId());
 
-        StringBuilder contextBuilder = new StringBuilder();
-        contextBuilder.append("You are PathWise AI Career Coach, an intelligent mentor helping the learner achieve their career milestones.\n");
+        StringBuilder ragContext = new StringBuilder();
+        ragContext.append("### SYSTEM PERSONA & INSTRUCTIONS\n");
+        ragContext.append("You are PathWise AI Career Coach, a personalized and supportive technical mentor.\n");
+        ragContext.append("Provide structured, actionable, encouraging advice grounded in the learner's actual profile and roadmap.\n\n");
+
+        ragContext.append("### RETRIEVED USER PROFILE (RAG KNOWLEDGE)\n");
         if (profileOpt.isPresent()) {
-            contextBuilder.append("Learner Target Goal: ").append(profileOpt.get().getGoal()).append("\n");
-            contextBuilder.append("Current Skills: ").append(profileOpt.get().getCurrentSkills()).append("\n");
-            contextBuilder.append("Learning Style: ").append(profileOpt.get().getLearningStyle()).append("\n");
+            LearnerProfile profile = profileOpt.get();
+            ragContext.append("Learner Target Goal: ").append(profile.getGoal() != null ? profile.getGoal() : "Full Stack Web Developer").append("\n");
+            ragContext.append("Current Skills: ").append(profile.getCurrentSkills() != null ? profile.getCurrentSkills() : "[]").append("\n");
+            ragContext.append("Learning Style: ").append(profile.getLearningStyle() != null ? profile.getLearningStyle() : "hands-on").append("\n");
+            ragContext.append("Weekly Time Availability: ").append(profile.getWeeklyHours() != null ? profile.getWeeklyHours() : 10).append(" hours/week\n");
+        } else {
+            ragContext.append("Learner Target Goal: Full Stack Web Developer\n");
+            ragContext.append("Learning Style: hands-on\n");
         }
+
+        // Active roadmap and item details
         if (!roadmaps.isEmpty()) {
-            contextBuilder.append("Active Roadmap: ").append(roadmaps.get(0).getTitle()).append("\n");
+            Roadmap activeRoadmap = roadmaps.get(0);
+            ragContext.append("\n### ACTIVE LEARNING ROADMAP\n");
+            ragContext.append("Active Roadmap: ").append(activeRoadmap.getTitle()).append(" (Status: ").append(activeRoadmap.getStatus()).append(")\n");
+
+            List<String> completedList = new ArrayList<>();
+            String nextPendingItem = null;
+
+            if (activeRoadmap.getMilestones() != null) {
+                for (Milestone m : activeRoadmap.getMilestones()) {
+                    ragContext.append("- ").append(m.getTitle()).append(" (Order ").append(m.getOrderIndex()).append(")\n");
+                    if (m.getItems() != null) {
+                        for (RoadmapItem item : m.getItems()) {
+                            String itemTitle = item.getCatalogItem() != null ? item.getCatalogItem().getTitle() : "Module";
+                            String status = item.getStatus() != null ? item.getStatus() : "TODO";
+                            ragContext.append("   * [").append(status).append("] ").append(itemTitle);
+                            if (item.getCatalogItem() != null) {
+                                ragContext.append(" (").append(item.getCatalogItem().getDifficulty()).append(", ").append(item.getCatalogItem().getFormat()).append(")");
+                            }
+                            ragContext.append("\n");
+
+                            if ("COMPLETED".equalsIgnoreCase(status)) {
+                                completedList.add(itemTitle);
+                            } else if (nextPendingItem == null && ("IN_PROGRESS".equalsIgnoreCase(status) || "TODO".equalsIgnoreCase(status))) {
+                                nextPendingItem = itemTitle + (item.getCatalogItem() != null ? " (" + item.getCatalogItem().getDescription() + ")" : "");
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!completedList.isEmpty()) {
+                ragContext.append("Completed Competencies: ").append(String.join(", ", completedList)).append("\n");
+            }
+            if (nextPendingItem != null) {
+                ragContext.append("Next Pending Milestone / Item: ").append(nextPendingItem).append("\n");
+            }
         }
-        contextBuilder.append("\nUser asks: ").append(request.getMessage());
-        contextBuilder.append("\nProvide an actionable, structured, encouraging response with specific tips and milestone advice.");
 
-        String aiResponse = aiProvider.generateText(contextBuilder.toString());
+        // Add recent conversation history for multi-turn context
+        if (history.size() > 1) {
+            ragContext.append("\n### RECENT CONVERSATION MEMORY (MULTI-TURN DIALOGUE)\n");
+            int startIdx = Math.max(0, history.size() - 12);
+            for (int i = startIdx; i < history.size() - 1; i++) {
+                ChatMessage m = history.get(i);
+                String roleLabel = "user".equalsIgnoreCase(m.getRole()) ? "Learner" : "AI Career Coach";
+                ragContext.append(roleLabel).append(": ").append(m.getContent()).append("\n");
+            }
+        }
 
+        ragContext.append("\n### USER INQUIRY\n");
+        ragContext.append("User asks: ").append(request.getMessage()).append("\n\n");
+        ragContext.append("Provide a clear, markdown-formatted response with practical milestones, code hints, or study pacing advice.");
+
+        // 3. Generate Grounded AI Response
+        String aiResponse = aiProvider.generateText(ragContext.toString());
+
+        // 4. Save AI Response
         ChatMessage aiMsg = new ChatMessage();
         aiMsg.setUser(user);
         aiMsg.setRole("assistant");
         aiMsg.setContent(aiResponse);
-        chatMessageRepository.save(aiMsg);
+        ChatMessage savedAiMsg = chatMessageRepository.save(aiMsg);
 
-        return ResponseEntity.ok(aiMsg);
+        return ResponseEntity.ok(toDto(savedAiMsg));
+    }
+
+    @DeleteMapping
+    @Transactional
+    public ResponseEntity<?> clearChatHistory() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        chatMessageRepository.deleteByUserId(userDetails.getId());
+        return ResponseEntity.ok(Map.of("message", "Chat history cleared successfully."));
+    }
+
+    private ChatMessageDto toDto(ChatMessage message) {
+        return ChatMessageDto.builder()
+                .id(message.getId())
+                .role(message.getRole())
+                .content(message.getContent())
+                .createdAt(message.getCreatedAt())
+                .build();
     }
 }

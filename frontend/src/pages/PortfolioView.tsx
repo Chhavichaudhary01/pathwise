@@ -1,19 +1,84 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
+import api from '@/lib/api';
 
 export default function PortfolioView() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [copied, setCopied] = useState(false);
+  const [roadmaps, setRoadmaps] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      api.get('/roadmaps').catch(() => ({ data: [] })),
+      api.get('/profile').catch(() => ({ data: null }))
+    ])
+      .then(([roadmapsRes, profileRes]) => {
+        setRoadmaps(roadmapsRes.data || []);
+        setProfile(profileRes.data || null);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
+
+  let totalItems = 0;
+  let completedCount = 0;
+  const verifiedSkills = new Map<string, { name: string; score: string; level: string }>();
+  const completedProjects: any[] = [];
+
+  const targetRole = profile?.goal || (roadmaps.length > 0 ? roadmaps[0].title : "Software Developer");
+
+  roadmaps.forEach((rm) => {
+    if (rm.milestones) {
+      rm.milestones.forEach((m: any) => {
+        if (m.items) {
+          m.items.forEach((item: any) => {
+            totalItems++;
+            const cat = item.catalogItem;
+            if (item.status === 'COMPLETED') {
+              completedCount++;
+              if (cat?.skills) {
+                cat.skills.forEach((sk: string) => {
+                  verifiedSkills.set(sk, {
+                    name: sk,
+                    score: '100% Retained',
+                    level: cat.difficulty ? cat.difficulty.toUpperCase() : 'VERIFIED'
+                  });
+                });
+              }
+              if (cat?.format === 'project' || cat?.title?.toLowerCase().includes('project')) {
+                completedProjects.push({
+                  title: cat.title,
+                  description: cat.description,
+                  tech: cat.skills || ['Hands-on Project'],
+                  hours: `${cat.estimatedHours || 3} Hours`
+                });
+              }
+            } else if (cat?.skills && !verifiedSkills.has(cat.skills[0])) {
+              // Add as in-progress / emerging
+              verifiedSkills.set(cat.skills[0], {
+                name: cat.skills[0],
+                score: item.status === 'IN_PROGRESS' ? 'In Progress' : 'Prerequisite',
+                level: cat.difficulty ? cat.difficulty.toUpperCase() : 'FOUNDATION'
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+
+  const masteryPercent = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : (completedCount > 0 ? 100 : 0);
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
@@ -29,7 +94,7 @@ export default function PortfolioView() {
             <Button onClick={handleShare} variant="outline" className="text-sm font-semibold">
               {copied ? '✓ Link Copied!' : '🔗 Copy Shareable Portfolio Link'}
             </Button>
-            <Button onClick={() => window.print()} className="text-sm font-semibold">
+            <Button onClick={() => window.print()} className="text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800">
               📄 Export PDF
             </Button>
           </div>
@@ -45,16 +110,16 @@ export default function PortfolioView() {
                 <span>Mastery Assessed</span>
               </div>
               <h1 className="text-3xl md:text-4xl font-extrabold text-white">
-                {user?.email ? user.email.split('@')[0] : 'Learner'}'s Career Portfolio
+                {user?.email ? user.email.split('@')[0] : 'Learner'}'s Competency Portfolio
               </h1>
               <p className="text-slate-300 text-sm max-w-xl">
-                Target Role: <strong className="text-white">Frontend & Full-Stack Developer</strong>. Demonstrating verifiable competencies backed by assessment-checked milestones, not self-report.
+                Target Role: <strong className="text-white">{targetRole}</strong>. Demonstrating verifiable competencies backed by assessment-checked milestones, not self-report.
               </p>
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20 text-center min-w-[140px]">
               <span className="text-xs uppercase font-semibold text-slate-300">Overall Mastery</span>
-              <p className="text-3xl font-black text-white mt-1">85%</p>
+              <p className="text-3xl font-black text-white mt-1">{masteryPercent}%</p>
               <span className="text-[11px] text-green-300 font-medium">Topological Verified</span>
             </div>
           </div>
@@ -65,28 +130,30 @@ export default function PortfolioView() {
           <CardHeader>
             <CardTitle className="text-lg font-bold">Verified Competencies</CardTitle>
             <CardDescription className="text-xs">
-              Skills validated through interactive mini-assessments on PathWise.
+              Skills validated through completed roadmap milestones & interactive checks on PathWise.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { name: 'HTML5 & Semantics', score: '100% Score', level: 'Advanced' },
-                { name: 'Responsive CSS / Tailwind', score: '95% Score', level: 'Advanced' },
-                { name: 'JavaScript (ES6+)', score: '90% Score', level: 'Intermediate' },
-                { name: 'React 18 & Hooks', score: '88% Score', level: 'Intermediate' },
-                { name: 'REST APIs & Async', score: '85% Score', level: 'Intermediate' },
-                { name: 'PostgreSQL & Neon DB', score: '82% Score', level: 'Intermediate' },
-                { name: 'State Management (Zustand)', score: '80% Score', level: 'Intermediate' },
-                { name: 'Topological DAG Sorting', score: '100% Score', level: 'Advanced' },
-              ].map((skill, idx) => (
-                <div key={idx} className="p-3.5 bg-slate-50 border rounded-lg space-y-1">
-                  <span className="text-xs text-blue-600 font-bold uppercase">{skill.level}</span>
-                  <h4 className="font-bold text-sm text-slate-900">{skill.name}</h4>
-                  <span className="text-xs text-green-700 font-semibold block">{skill.score}</span>
-                </div>
-              ))}
-            </div>
+            {loading ? (
+              <div className="py-8 text-center text-slate-500 text-sm">Loading verified competencies...</div>
+            ) : verifiedSkills.size === 0 ? (
+              <div className="py-8 text-center text-slate-500 text-sm">
+                <p>No competencies completed yet.</p>
+                <Button onClick={() => navigate('/onboarding')} size="sm" className="mt-3">Start Roadmap</Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {Array.from(verifiedSkills.values()).slice(0, 8).map((skill, idx) => (
+                  <div key={idx} className="p-3.5 bg-slate-50 border rounded-lg space-y-1">
+                    <span className="text-[10px] text-blue-600 font-bold uppercase">{skill.level}</span>
+                    <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{skill.name}</h4>
+                    <span className={`text-xs font-semibold block ${skill.score.includes('Retained') ? 'text-green-700' : 'text-slate-600'}`}>
+                      {skill.score}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -95,45 +162,33 @@ export default function PortfolioView() {
           <CardHeader>
             <CardTitle className="text-lg font-bold">Completed Hands-on Milestone Projects</CardTitle>
             <CardDescription className="text-xs">
-              Practical micro-projects completed during the learning roadmap.
+              Practical micro-projects completed during your learning sequence.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              {
-                title: 'Full-Stack Recommender & Interactive Dashboard',
-                tech: ['React', 'TypeScript', 'Tailwind', 'Spring Boot', 'PostgreSQL'],
-                description: 'Engineered a career recommendation web app with topological DAG sorting and JWT authentication.',
-                hours: '15 Hours',
-              },
-              {
-                title: 'JavaScript ES6+ Asynchronous Data Transformer',
-                tech: ['JavaScript', 'Promises', 'Async/Await', 'REST APIs'],
-                description: 'Implemented recursive data fetchers, error retries, and structured JSON parsing.',
-                hours: '8 Hours',
-              },
-              {
-                title: 'Responsive Accessible Portfolio Architecture',
-                tech: ['HTML5', 'CSS3', 'Semantic Markup', 'ARIA'],
-                description: 'Built a compliant, mobile-first responsive portfolio with keyboard navigation and dark mode.',
-                hours: '6 Hours',
-              }
-            ].map((proj, idx) => (
-              <div key={idx} className="p-4 border rounded-xl bg-slate-50 space-y-2">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-bold text-slate-900 text-base">{proj.title}</h3>
-                  <span className="text-xs bg-slate-200 px-2 py-1 rounded font-medium">{proj.hours}</span>
-                </div>
-                <p className="text-sm text-slate-600">{proj.description}</p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {proj.tech.map((t) => (
-                    <span key={t} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium border border-blue-100">
-                      {t}
-                    </span>
-                  ))}
-                </div>
+            {completedProjects.length === 0 ? (
+              <div className="py-8 text-center text-slate-500 text-xs">
+                <p>No completed projects yet.</p>
+                <p className="text-[11px] text-slate-400 mt-1">Mark milestone projects as completed in your roadmap to showcase them here.</p>
               </div>
-            ))}
+            ) : (
+              completedProjects.map((proj, idx) => (
+                <div key={idx} className="p-4 border rounded-xl bg-slate-50 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-bold text-slate-900 text-base">{proj.title}</h3>
+                    <span className="text-xs bg-slate-200 px-2 py-1 rounded font-medium">{proj.hours}</span>
+                  </div>
+                  <p className="text-sm text-slate-600">{proj.description}</p>
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {proj.tech.map((t: string) => (
+                      <span key={t} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium border border-blue-100">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 

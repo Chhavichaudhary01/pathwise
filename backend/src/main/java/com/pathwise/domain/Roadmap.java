@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
-import java.util.List;
-import java.util.ArrayList;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
 @Entity
 @Table(name = "roadmaps")
@@ -15,6 +15,7 @@ public class Roadmap {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -34,7 +35,7 @@ public class Roadmap {
     @OneToMany(mappedBy = "roadmap", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
     @Builder.Default
-    private List<Milestone> milestones = new ArrayList<>();
+    private Set<Milestone> milestones = new LinkedHashSet<>();
 
     @PrePersist
     protected void onCreate() {

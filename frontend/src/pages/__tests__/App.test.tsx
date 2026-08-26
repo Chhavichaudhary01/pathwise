@@ -1,0 +1,1 @@
+﻿import { render, screen } from "@testing-library/react"; import App from "../../App"; import { test, expect } from "vitest"; test("renders App and navigates to Landing", () => { render(<App />); expect(screen.getByText(/Your AI-Powered Career/i)).toBeInTheDocument(); });

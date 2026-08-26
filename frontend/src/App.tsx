@@ -25,13 +25,14 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify/:uuid" element={<PublicVerification />} />
         <Route path="/verify" element={<PublicVerification />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+        <Route path="/roadmap" element={<ProtectedRoute><RoadmapView /></ProtectedRoute>} />
         <Route path="/roadmap/:id" element={<ProtectedRoute><RoadmapView /></ProtectedRoute>} />
         <Route path="/skill-graph" element={<ProtectedRoute><SkillGraphView /></ProtectedRoute>} />
         <Route path="/portfolio" element={<ProtectedRoute><PortfolioView /></ProtectedRoute>} />

@@ -1,7 +1,9 @@
 spring:
   datasource:
-    url: jdbc:tc:postgresql:16-alpine:///pathwisetest
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://ep-square-sea-azzex9dm-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require}
+    username: ${SPRING_DATASOURCE_USERNAME:neondb_owner}
+    password: ${SPRING_DATASOURCE_PASSWORD:npg_LxHQ0YvgVXq4}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: validate

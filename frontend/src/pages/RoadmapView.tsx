@@ -163,9 +163,17 @@ export default function RoadmapView() {
   const [quizScore, setQuizScore] = useState<number | null>(null);
 
   useEffect(() => {
-    if (id === 'demo') {
-      setRoadmap(DEMO_ROADMAP);
-      setLoading(false);
+    if (!id || id === 'demo' || id === 'undefined') {
+      api.get('/roadmaps')
+        .then((res) => {
+          if (res.data && res.data.length > 0) {
+            setRoadmap(res.data[0]);
+          } else {
+            setRoadmap(DEMO_ROADMAP);
+          }
+        })
+        .catch(() => setRoadmap(DEMO_ROADMAP))
+        .finally(() => setLoading(false));
       return;
     }
 
@@ -174,10 +182,26 @@ export default function RoadmapView() {
         if (res.data && res.data.milestones && res.data.milestones.length > 0) {
           setRoadmap(res.data);
         } else {
-          setRoadmap(DEMO_ROADMAP);
+          return api.get('/roadmaps').then((rRes) => {
+            if (rRes.data && rRes.data.length > 0) {
+              setRoadmap(rRes.data[0]);
+            } else {
+              setRoadmap(DEMO_ROADMAP);
+            }
+          });
         }
       })
-      .catch(() => setRoadmap(DEMO_ROADMAP))
+      .catch(() => {
+        api.get('/roadmaps')
+          .then((rRes) => {
+            if (rRes.data && rRes.data.length > 0) {
+              setRoadmap(rRes.data[0]);
+            } else {
+              setRoadmap(DEMO_ROADMAP);
+            }
+          })
+          .catch(() => setRoadmap(DEMO_ROADMAP));
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -221,7 +245,10 @@ export default function RoadmapView() {
     }
   };
 
+  const [activeQuizMilestoneId, setActiveQuizMilestoneId] = useState<string | null>(null);
+
   const openQuiz = (milestoneId: string) => {
+    setActiveQuizMilestoneId(milestoneId);
     setQuizModalOpen(true);
     setQuizSubmitted(false);
     setSelectedAnswers({});
@@ -266,6 +293,17 @@ export default function RoadmapView() {
     const percent = Math.round((correct / quizQuestions.length) * 100);
     setQuizScore(percent);
     setQuizSubmitted(true);
+
+    if (percent >= 70 && activeQuizMilestoneId && roadmap) {
+      const targetMilestone = roadmap.milestones.find(m => m.id === activeQuizMilestoneId);
+      if (targetMilestone) {
+        targetMilestone.items.forEach(async (it) => {
+          if (it.status !== 'COMPLETED') {
+            await toggleItemStatus(it.id, it.status);
+          }
+        });
+      }
+    }
   };
 
   if (loading) {

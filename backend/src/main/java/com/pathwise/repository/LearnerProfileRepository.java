@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public interface LearnerProfileRepository extends JpaRepository<LearnerProfile, UUID> {
     Optional<LearnerProfile> findByUserId(UUID userId);
+    boolean existsByUserId(UUID userId);
 }

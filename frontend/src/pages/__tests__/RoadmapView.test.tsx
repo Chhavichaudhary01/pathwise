@@ -1,0 +1,1 @@
+﻿import { render, screen } from "@testing-library/react"; import { BrowserRouter } from "react-router-dom"; import RoadmapView from "../RoadmapView"; import { test, expect } from "vitest"; test("renders roadmap view", () => { render(<BrowserRouter><RoadmapView /></BrowserRouter>); expect(screen.getByText(/Your Personalized Roadmap/i)).toBeInTheDocument(); });

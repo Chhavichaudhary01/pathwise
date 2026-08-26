@@ -12,12 +12,13 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated } = useAuthStore();
+  const { login, loginDemo, isAuthenticated } = useAuthStore();
+  const [demoLoading, setDemoLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -26,20 +27,34 @@ export default function Register() {
     setError('');
     setLoading(true);
     try {
-      await api.post('/auth/signup', { email, password });
+      const cleanEmail = email.trim().toLowerCase();
+      await api.post('/auth/signup', { email: cleanEmail, password });
       // Auto login immediately after registration
-      const signinRes = await api.post('/auth/signin', { email, password });
+      const signinRes = await api.post('/auth/signin', { email: cleanEmail, password });
       login(signinRes.data.accessToken, signinRes.data.refreshToken, { id: signinRes.data.id, email: signinRes.data.email });
-      navigate('/', { replace: true });
+      navigate('/onboarding', { replace: true });
     } catch (err: any) {
       console.error('Registration error:', err);
       if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        setError('Server request timed out. Render backend may still be waking up from sleep. Please try again in a moment.');
+        setError('Server request timed out. Please try again in a moment.');
       } else {
         setError(err.response?.data?.message || 'Registration failed. Please check credentials or backend status.');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDemo = async () => {
+    setDemoLoading(true);
+    try {
+      await loginDemo();
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      console.error('Demo error:', err);
+      navigate('/dashboard', { replace: true });
+    } finally {
+      setDemoLoading(false);
     }
   };
 
@@ -55,7 +70,24 @@ export default function Register() {
             Start your personalized career and learning roadmap today
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          
+          <Button 
+            onClick={handleDemo}
+            disabled={demoLoading || loading}
+            type="button" 
+            variant="outline" 
+            className="w-full border-blue-200 bg-blue-50/50 hover:bg-blue-100/70 text-blue-700 font-bold py-2.5 flex items-center justify-center gap-2"
+          >
+            {demoLoading ? 'Launching Demo...' : '⚡ Try Instant Demo (1-Click) 🚀'}
+          </Button>
+
+          <div className="relative flex items-center justify-center">
+            <div className="border-t border-slate-200 w-full"></div>
+            <span className="bg-white px-2 text-[11px] text-slate-400 uppercase font-semibold">or create with email</span>
+            <div className="border-t border-slate-200 w-full"></div>
+          </div>
+
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-xs font-bold text-slate-700">Email Address</Label>
@@ -86,11 +118,6 @@ export default function Register() {
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-medium">
                 {error}
               </div>
-            )}
-            {loading && (
-              <p className="text-xs text-blue-600 text-center animate-pulse">
-                Connecting to backend (may take ~30–45s if server is waking up)...
-              </p>
             )}
             <Button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 font-bold py-2.5">
               {loading ? 'Creating account...' : 'Create Account & Start 🚀'}

@@ -1,0 +1,1 @@
+﻿import { render, screen } from "@testing-library/react"; import { BrowserRouter } from "react-router-dom"; import Landing from "../Landing"; import { test, expect } from "vitest"; test("renders landing page", () => { render(<BrowserRouter><Landing /></BrowserRouter>); expect(screen.getByText(/Your AI-Powered Career/i)).toBeInTheDocument(); });
