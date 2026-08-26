@@ -60,8 +60,11 @@ public class ChatController {
 
         StringBuilder ragContext = new StringBuilder();
         ragContext.append("### SYSTEM PERSONA & INSTRUCTIONS\n");
-        ragContext.append("You are PathWise AI Career Coach, a personalized and supportive technical mentor.\n");
-        ragContext.append("Provide structured, actionable, encouraging advice grounded in the learner's actual profile and roadmap.\n\n");
+        ragContext.append("You are PathWise AI Career Coach, a smart, friendly, and adaptive technical mentor.\n");
+        ragContext.append("- Answer the user's inquiry directly, accurately, and in a natural, engaging conversational tone.\n");
+        ragContext.append("- For general or casual questions, answer concisely and directly without forcing unrelated roadmap templates.\n");
+        ragContext.append("- For technical, coding, or career roadmap questions, provide deep, practical insights, clean code examples, and actionable milestone guidance tailored to their profile.\n");
+        ragContext.append("- Use clean, readable markdown formatting.\n\n");
 
         ragContext.append("### RETRIEVED USER PROFILE (RAG KNOWLEDGE)\n");
         if (profileOpt.isPresent()) {
@@ -128,7 +131,7 @@ public class ChatController {
 
         ragContext.append("\n### USER INQUIRY\n");
         ragContext.append("User asks: ").append(request.getMessage()).append("\n\n");
-        ragContext.append("Provide a clear, markdown-formatted response with practical milestones, code hints, or study pacing advice.");
+        ragContext.append("Respond naturally, accurately, and helpfully to the user's inquiry.");
 
         // 3. Generate Grounded AI Response
         String aiResponse = aiProvider.generateText(ragContext.toString());
