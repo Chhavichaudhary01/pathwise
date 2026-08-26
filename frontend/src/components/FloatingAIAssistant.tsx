@@ -69,7 +69,16 @@ export default function FloatingAIAssistant() {
       ]);
     } catch (err: any) {
       console.error('Chat error:', err);
-      const errMsg = err.response?.data?.message || (err.response?.status === 401 ? 'Session expired. Please log in again.' : 'Unable to connect to AI Coach. Please make sure the backend is running.');
+      let errMsg = err.response?.data?.message;
+      if (!errMsg) {
+        if (err.response?.status === 401) {
+          errMsg = 'Your session has expired. Please log out and sign in again to refresh your session.';
+        } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+          errMsg = 'AI Coach took a bit longer to respond. Please try sending your message once more.';
+        } else {
+          errMsg = 'Unable to connect to AI Coach. Please ensure your backend is running on port 4444 and you are signed in.';
+        }
+      }
       setMessages((prev) => [
         ...prev,
         {

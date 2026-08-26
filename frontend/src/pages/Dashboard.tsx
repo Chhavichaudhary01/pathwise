@@ -1,13 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Sparkles,
+  ArrowRight,
+  Flame,
+  CheckCircle2,
+  Clock,
+  Hourglass,
+  ChevronRight,
+  Award
+} from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
 export default function Dashboard() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
+
   const [roadmaps, setRoadmaps] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -24,18 +33,13 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
-
   // Compute live dynamic statistics from real user roadmaps
   let totalItems = 0;
   let completedItems = 0;
   let inProgressItems = 0;
   const completedSkillSet = new Map<string, number>();
   let nextRecommendedAction = "Complete your first onboarding milestone to build core momentum.";
-  let currentGoal = profile?.goal || (roadmaps.length > 0 ? roadmaps[0].title : "Software & Web Development");
+  let currentGoal = profile?.goal || (roadmaps.length > 0 ? roadmaps[0].title : "Full Stack Web Developer");
 
   roadmaps.forEach((rm) => {
     if (rm.milestones) {
@@ -64,229 +68,296 @@ export default function Dashboard() {
 
   const completionPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
   const weeklyHours = profile?.weeklyHours || 10;
+  const userName = profile?.goal 
+    ? (user?.email?.split('@')[0] || 'Learner') 
+    : (user?.email?.split('@')[0] || 'Learner');
 
-  // Build competencies list dynamically from completed skills or active roadmap skills
-  const dynamicCompetencies: { name: string; percent: number; color: string }[] = [];
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
+  // Build competencies list dynamically
+  const dynamicCompetencies: { name: string; percent: number; color: string; bg: string }[] = [];
   if (completedSkillSet.size > 0) {
     completedSkillSet.forEach((count, skillName) => {
       const pct = Math.min(100, Math.round((count / Math.max(1, totalItems * 0.2)) * 100));
       dynamicCompetencies.push({
         name: skillName,
         percent: Math.max(25, pct),
-        color: pct >= 80 ? 'bg-green-600' : 'bg-blue-600'
+        color: pct >= 80 ? 'bg-[#10B981]' : 'bg-[#5051F9]',
+        bg: pct >= 80 ? 'bg-emerald-50 text-emerald-700' : 'bg-[#EDE9FE] text-[#7C3AED]'
       });
     });
   } else if (roadmaps.length > 0 && roadmaps[0].milestones?.length > 0) {
-    // Extract first few roadmap skills
     const firstItems = roadmaps[0].milestones[0]?.items || [];
     firstItems.slice(0, 4).forEach((it: any) => {
       if (it.catalogItem?.skills?.[0]) {
+        const isDone = it.status === 'COMPLETED';
+        const isProg = it.status === 'IN_PROGRESS';
         dynamicCompetencies.push({
           name: it.catalogItem.skills[0],
-          percent: it.status === 'COMPLETED' ? 100 : (it.status === 'IN_PROGRESS' ? 40 : 10),
-          color: it.status === 'COMPLETED' ? 'bg-green-600' : 'bg-blue-500'
+          percent: isDone ? 100 : (isProg ? 50 : 20),
+          color: isDone ? 'bg-[#10B981]' : 'bg-[#5051F9]',
+          bg: isDone ? 'bg-emerald-50 text-emerald-700' : 'bg-[#EDE9FE] text-[#7C3AED]'
         });
       }
     });
   }
 
+  if (dynamicCompetencies.length === 0) {
+    dynamicCompetencies.push(
+      { name: 'Frontend Architecture', percent: 35, color: 'bg-[#5051F9]', bg: 'bg-[#EDE9FE] text-[#7C3AED]' },
+      { name: 'REST & API Integration', percent: 45, color: 'bg-[#0284C7]', bg: 'bg-[#E0F2FE] text-[#0284C7]' },
+      { name: 'Database & SQL Primitives', percent: 20, color: 'bg-[#DB2777]', bg: 'bg-[#FCE7F3] text-[#DB2777]' }
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="space-y-6 w-full">
+      
+      {/* GREETING HEADER & QUICK STATS ROW */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
+        <div>
+          <p className="text-[11px] font-bold text-slate-400">Personalized Learning & Career Hub</p>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5 flex items-center gap-2">
+            <span>{getGreeting()} {userName}!</span>
+            <Flame className="w-6 h-6 text-orange-500 fill-orange-500 inline" />
+          </h1>
+        </div>
+
+        {/* Quick Stats Strip */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xs text-xs font-bold text-slate-700">
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <span><strong>{weeklyHours}h</strong>/wk Pace</span>
+          </div>
+
+          <div className="bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xs text-xs font-bold text-slate-700">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            <span><strong>{completedItems}</strong> Done</span>
+          </div>
+
+          <div className="bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xs text-xs font-bold text-slate-700">
+            <Hourglass className="w-3.5 h-3.5 text-amber-500" />
+            <span><strong>{inProgressItems}</strong> In Progress</span>
+          </div>
+        </div>
+      </div>
+
+      {/* AI PERSONALIZED PROGRESS DIGEST (Hero Banner) */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#4F46E5] via-[#5051F9] to-[#6366F1] p-6 md:p-8 text-white shadow-md">
         
-        {/* Top Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-xl border shadow-sm">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Learner Dashboard</span>
-              <span className="text-xs bg-blue-50 text-blue-800 font-bold px-2.5 py-0.5 rounded-full border border-blue-200 flex items-center gap-1">
-                ⏱️ {weeklyHours}h / week pace
-              </span>
-              {completedItems > 0 && (
-                <span className="text-xs bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded-full">
-                  ✓ {completedItems} Milestone{completedItems > 1 ? 's' : ''} Completed
-                </span>
-              )}
-            </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1">
-              Welcome, {user?.email || 'Learner'}
-            </h1>
-            <p className="text-slate-600 text-xs mt-0.5">
-              Goal: <strong className="text-slate-800">{currentGoal}</strong> • Empowered by Google Gemini AI & Prerequisite DAG Engine.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={() => navigate('/onboarding')} className="bg-blue-600 hover:bg-blue-700 font-semibold">
-              + New Roadmap
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/chat')} className="font-semibold text-blue-700">
-              💬 AI Coach
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/skill-graph')} className="font-semibold">
-              🕸️ Skill DAG
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/portfolio')} className="font-semibold">
-              📜 Portfolio
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/settings')}>
-              ⚙️ Settings
-            </Button>
-            <Button variant="ghost" onClick={handleLogout} className="text-slate-500">
-              Log Out
-            </Button>
-          </div>
+        {/* Sparkle Graphics */}
+        <div className="absolute right-12 top-6 text-white/20 text-5xl select-none font-black pointer-events-none">
+          ✦
+        </div>
+        <div className="absolute right-36 bottom-6 text-white/15 text-7xl select-none font-black pointer-events-none">
+          ✦
         </div>
 
-        {/* Weekly Digest & Progress Overview Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          {/* Dynamic AI Progress Digest */}
-          <Card className="md:col-span-2 border shadow-sm bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 text-white">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-blue-300 font-bold uppercase tracking-wider">AI Personalized Progress Digest</span>
-                <span className="text-xs bg-blue-600/80 px-2.5 py-0.5 rounded-full text-white font-medium">
-                  {completionPercent}% Path Completion
-                </span>
-              </div>
-              <CardTitle className="text-xl font-bold text-white">
-                {completedItems > 0 ? "Momentum in Progress!" : "Ready to Start Your Learning Path"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-blue-100">
-              <p>
-                {completedItems > 0 
-                  ? `You have mastered ${completedItems} of ${totalItems} milestone items toward your goal of "${currentGoal}". Your prerequisite sequence is dynamically adapting to your pacing.`
-                  : `Your path for "${currentGoal}" is ready. Follow the prerequisite DAG to master core concepts before advancing to complex frameworks.`}
-              </p>
-              <div className="p-3 bg-white/10 rounded-lg border border-white/20 text-xs space-y-1">
-                <span className="font-semibold text-white">Next Recommended Action:</span>
-                <p className="text-slate-200">{nextRecommendedAction}</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="relative z-10 max-w-xl space-y-3.5">
+          <div className="flex items-center gap-2">
+            <span className="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest text-white">
+              AI Personalized Progress Digest
+            </span>
+            <span className="bg-white text-[#5051F9] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-xs">
+              {completionPercent}% Completed
+            </span>
+          </div>
 
-          {/* Dynamic Competency Mastery Card */}
-          <Card className="border shadow-sm bg-white">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-bold">Skill Competencies</CardTitle>
-              <CardDescription className="text-xs">
-                {dynamicCompetencies.length > 0 ? "Calculated from your active milestones." : "Generated upon completing milestones."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs">
-              {dynamicCompetencies.length === 0 ? (
-                <div className="py-6 text-center text-slate-500 text-xs">
-                  <p>No competency data yet.</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Complete roadmap items & quizzes to unlock verified skill percentages.</p>
-                </div>
-              ) : (
-                dynamicCompetencies.slice(0, 5).map((s, idx) => (
-                  <div key={idx} className="space-y-1">
-                    <div className="flex justify-between font-semibold text-slate-700">
-                      <span>{s.name}</span>
-                      <span>{s.percent}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                      <div className={`${s.color} h-1.5 rounded-full`} style={{ width: `${s.percent}%` }}></div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight leading-tight text-white">
+            {completedItems > 0 ? "Momentum in Progress!" : "Ready to Master Your Learning Path"}
+          </h2>
 
-        </div>
+          <p className="text-xs text-blue-100 leading-relaxed max-w-lg">
+            {completedItems > 0
+              ? `You have mastered ${completedItems} of ${totalItems} milestone competencies toward your goal of "${currentGoal}". Your prerequisite sequence is dynamically adapting to your pacing.`
+              : `Your topological path for "${currentGoal}" is ready. Follow the prerequisite DAG to master core concepts before advancing to complex frameworks.`}
+          </p>
 
-        {/* Roadmaps List */}
-        <Card className="border shadow-sm bg-white">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle className="text-xl font-bold">Your Active Learning Roadmaps</CardTitle>
-                <CardDescription className="text-xs">
-                  Topologically sorted milestone paths personalized to your goals.
-                </CardDescription>
-              </div>
-              <Button onClick={() => navigate('/onboarding')} size="sm" className="font-semibold">
-                + Create Path
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="py-8 text-center text-slate-500">
-                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                Loading your personalized roadmaps...
-              </div>
-            ) : roadmaps.length === 0 ? (
-              <div className="text-center py-12 space-y-4">
-                <div className="text-4xl">🗺️</div>
-                <h3 className="text-lg font-bold text-slate-800">No Roadmaps Yet</h3>
-                <p className="text-slate-600 max-w-md mx-auto text-sm">
-                  Tell PathWise what you want to achieve, and we'll generate an optimal milestone roadmap for you.
-                </p>
-                <Button onClick={() => navigate('/onboarding')} size="lg" className="bg-blue-600 hover:bg-blue-700">
-                  Create Your First Roadmap 🚀
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {roadmaps.map((roadmap) => {
-                  let rTotal = 0;
-                  let rDone = 0;
-                  if (roadmap.milestones) {
-                    roadmap.milestones.forEach((m: any) => {
-                      if (m.items) {
-                        m.items.forEach((it: any) => {
-                          rTotal++;
-                          if (it.status === 'COMPLETED') rDone++;
-                        });
-                      }
-                    });
-                  }
-                  const rPercent = rTotal > 0 ? Math.round((rDone / rTotal) * 100) : 0;
+          {/* Next Recommended Action Box */}
+          <div className="p-3.5 bg-white/10 rounded-2xl border border-white/20 text-xs space-y-1 backdrop-blur-xs">
+            <span className="font-bold text-white flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+              <span>Next Recommended Milestone:</span>
+            </span>
+            <p className="text-slate-100 font-medium">{nextRecommendedAction}</p>
+          </div>
 
-                  return (
-                    <div 
-                      key={roadmap.id} 
-                      className="p-5 border rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white hover:border-blue-300 transition-colors shadow-sm"
-                    >
-                      <div className="space-y-1.5 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-lg font-bold text-slate-900">{roadmap.title}</h3>
-                          <span className="text-xs bg-green-100 text-green-800 font-semibold px-2.5 py-0.5 rounded-full">
-                            {roadmap.status || 'ACTIVE'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-slate-500">
-                          <span>{roadmap.milestones?.length || 0} Learning Phases</span>
-                          <span>•</span>
-                          <span>{rDone}/{rTotal} Milestones Done ({rPercent}%)</span>
-                          <span>•</span>
-                          <span>Created {roadmap.createdAt ? new Date(roadmap.createdAt).toLocaleDateString() : 'Recently'}</span>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="w-full max-w-md bg-slate-100 h-2 rounded-full overflow-hidden mt-1">
-                          <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${rPercent}%` }}></div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button onClick={() => navigate(`/roadmap/${roadmap.id}`)}>
-                          Open Roadmap &rarr;
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+          <div className="pt-1 flex items-center gap-3">
+            {roadmaps.length > 0 && (
+              <button
+                onClick={() => navigate(`/roadmap/${roadmaps[0].id}`)}
+                className="bg-slate-950 hover:bg-slate-900 text-white font-bold text-xs px-5 py-2.5 rounded-full inline-flex items-center gap-2 shadow-lg transition-transform hover:scale-105 cursor-pointer"
+              >
+                <span>Continue Learning</span>
+                <ArrowRight className="w-3.5 h-3.5 text-white" />
+              </button>
             )}
-          </CardContent>
-        </Card>
+            <button
+              onClick={() => navigate('/chat')}
+              className="bg-white/15 hover:bg-white/25 text-white font-bold text-xs px-4 py-2.5 rounded-full backdrop-blur-xs transition-colors cursor-pointer"
+            >
+              Ask AI Coach
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* TWO-COLUMN LOWER SECTION: ROADMAPS & COMPETENCIES */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* LEFT 2-COLS: ACTIVE LEARNING ROADMAPS */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900">Your Active Roadmaps</h3>
+              <p className="text-[11px] text-slate-400 font-medium">
+                Topologically sorted milestone paths personalized to your goals.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/onboarding')}
+              className="text-xs font-bold text-[#5051F9] hover:underline cursor-pointer"
+            >
+              + New Path
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="py-12 bg-white rounded-3xl border border-slate-100 p-6 text-center text-slate-400 text-xs">
+              <div className="w-7 h-7 border-2 border-[#5051F9] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              Loading your learning paths...
+            </div>
+          ) : roadmaps.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-slate-100 p-8 text-center space-y-3 shadow-xs">
+              <div className="text-3xl">🗺️</div>
+              <h4 className="text-sm font-extrabold text-slate-900">No Roadmaps Yet</h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Generate an optimal prerequisite-resolved roadmap personalized to your career goals.
+              </p>
+              <button
+                onClick={() => navigate('/onboarding')}
+                className="bg-[#5051F9] hover:bg-indigo-700 text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-xs cursor-pointer"
+              >
+                Generate Your First Roadmap 🚀
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {roadmaps.map((rm) => {
+                let rTotal = 0;
+                let rDone = 0;
+                if (rm.milestones) {
+                  rm.milestones.forEach((m: any) => {
+                    if (m.items) {
+                      m.items.forEach((it: any) => {
+                        rTotal++;
+                        if (it.status === 'COMPLETED') rDone++;
+                      });
+                    }
+                  });
+                }
+                const rPct = rTotal > 0 ? Math.round((rDone / rTotal) * 100) : 0;
+
+                return (
+                  <div
+                    key={rm.id}
+                    onClick={() => navigate(`/roadmap/${rm.id}`)}
+                    className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs hover:shadow-md hover:border-purple-200 transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer group"
+                  >
+                    <div className="space-y-2 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-[#5051F9] transition-colors">
+                          {rm.title}
+                        </h4>
+                        <span className="bg-emerald-50 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                          {rm.status || 'ACTIVE'}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
+                        <span>{rm.milestones?.length || 0} Phases</span>
+                        <span>•</span>
+                        <span>{rDone}/{rTotal} Milestones ({rPct}%)</span>
+                        <span>•</span>
+                        <span>{rm.createdAt ? new Date(rm.createdAt).toLocaleDateString() : 'Active'}</span>
+                      </div>
+
+                      {/* Progress Meter */}
+                      <div className="w-full max-w-md bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-[#5051F9] h-1.5 rounded-full transition-all"
+                          style={{ width: `${rPct}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <button className="self-end sm:self-auto w-8 h-8 rounded-full bg-slate-50 group-hover:bg-[#5051F9] group-hover:text-white flex items-center justify-center text-slate-400 transition-colors shadow-2xs">
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT 1-COL: COMPETENCIES MASTERY CARD */}
+        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-extrabold text-slate-900">Skill Competencies</h3>
+            <Award className="w-4 h-4 text-purple-500" />
+          </div>
+
+          <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+            Calculated dynamically from your completed prerequisite milestones.
+          </p>
+
+          {/* Competencies Progress Bars */}
+          <div className="space-y-3.5 pt-1">
+            {dynamicCompetencies.map((comp, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                  <span>{comp.name}</span>
+                  <span className="text-[11px] text-slate-500 font-semibold">{comp.percent}%</span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div
+                    className={`${comp.color} h-2 rounded-full transition-all duration-500`}
+                    style={{ width: `${comp.percent}%` }}
+                  ></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick Jump Links */}
+          <div className="pt-3 border-t border-slate-50 space-y-2">
+            <button
+              onClick={() => navigate('/skill-graph')}
+              className="w-full py-2.5 bg-[#F4F6FB] hover:bg-indigo-50 text-[#5051F9] text-xs font-bold rounded-2xl transition-colors text-center cursor-pointer shadow-2xs flex items-center justify-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Inspect Full Skill DAG</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/portfolio')}
+              className="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-2xl transition-colors text-center cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <Award className="w-3.5 h-3.5 text-slate-500" />
+              <span>Shareable Portfolio</span>
+            </button>
+          </div>
+
+        </div>
 
       </div>
+
     </div>
   );
 }

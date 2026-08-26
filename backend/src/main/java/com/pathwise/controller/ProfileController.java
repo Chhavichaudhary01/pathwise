@@ -73,10 +73,22 @@ public class ProfileController {
         } else if (profile.getWeeklyHours() == null) {
             profile.setWeeklyHours(10);
         }
-        if (newProfile.getLearningStyle() != null && !newProfile.getLearningStyle().isBlank()) {
-            profile.setLearningStyle(newProfile.getLearningStyle());
-        } else if (profile.getLearningStyle() == null) {
-            profile.setLearningStyle("hands-on");
+        if (newProfile.getAge() != null) {
+            profile.setAge(newProfile.getAge());
+        }
+        if (newProfile.getClassGrade() != null && !newProfile.getClassGrade().isBlank()) {
+            profile.setClassGrade(newProfile.getClassGrade());
+        }
+        if (newProfile.getBoard() != null && !newProfile.getBoard().isBlank()) {
+            profile.setBoard(newProfile.getBoard());
+        }
+        if (newProfile.getAddress() != null && !newProfile.getAddress().isBlank()) {
+            profile.setAddress(newProfile.getAddress());
+        }
+        if (newProfile.getIsProfileComplete() != null) {
+            profile.setIsProfileComplete(newProfile.getIsProfileComplete());
+        } else if (profile.getAge() != null && profile.getClassGrade() != null) {
+            profile.setIsProfileComplete(true);
         }
         
         return ResponseEntity.ok(profileRepository.save(profile));

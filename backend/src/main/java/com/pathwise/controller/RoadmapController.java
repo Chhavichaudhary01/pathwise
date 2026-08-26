@@ -4,6 +4,8 @@ import com.pathwise.ai.AiProvider;
 import com.pathwise.domain.*;
 import com.pathwise.dto.RoadmapResponse;
 import com.pathwise.dto.RoadmapResponse.*;
+import com.pathwise.dto.RoadmapTemplateDto;
+import com.pathwise.engine.RoadmapTemplateService;
 import com.pathwise.engine.Sequencer;
 import com.pathwise.repository.*;
 import com.pathwise.security.UserDetailsImpl;
@@ -32,6 +34,7 @@ public class RoadmapController {
     private final UserRepository userRepository;
     private final Sequencer sequencer;
     private final AiProvider aiProvider;
+    private final RoadmapTemplateService roadmapTemplateService;
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -44,7 +47,24 @@ public class RoadmapController {
         return ResponseEntity.ok(dtos);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/templates")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<RoadmapTemplateDto>> getAvailableTemplates() {
+        return ResponseEntity.ok(roadmapTemplateService.getAllTemplates());
+    }
+
+    @GetMapping("/current")
+    @Transactional(readOnly = true)
+    public ResponseEntity<RoadmapResponse> getCurrentRoadmap() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Roadmap> roadmaps = roadmapRepository.findByUserId(userDetails.getId());
+        if (roadmaps.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(toResponseDto(roadmaps.get(roadmaps.size() - 1)));
+    }
+
+    @GetMapping("/{id:[0-9a-fA-F\\-]{36}}")
     @Transactional(readOnly = true)
     public ResponseEntity<RoadmapResponse> getRoadmapById(@PathVariable UUID id) {
         return roadmapRepository.findByIdWithDetails(id)
@@ -68,7 +88,15 @@ public class RoadmapController {
                     return profileRepository.save(p);
                 });
 
-        // 1. Run sequencer with embedding matching and topological sort
+        // 1. Check for Best-Case Match in Curated Catalog (60+ Roadmaps)
+        Optional<RoadmapTemplateDto> templateMatch = roadmapTemplateService.findBestMatch(profile.getGoal(), profile.getCurrentSkills());
+        if (templateMatch.isPresent()) {
+            Roadmap templateRoadmap = roadmapTemplateService.buildRoadmapFromTemplate(templateMatch.get(), user, profile);
+            Roadmap savedRoadmap = roadmapRepository.save(templateRoadmap);
+            return ResponseEntity.ok(toResponseDto(savedRoadmap));
+        }
+
+        // 2. Run sequencer with embedding matching and topological sort fallback
         List<CatalogItem> sequence = sequencer.generateSequence(profile);
 
         if (sequence == null || sequence.isEmpty()) {
@@ -149,13 +177,23 @@ public class RoadmapController {
 
     @RequestMapping(value = "/items/{itemId}/status", method = {RequestMethod.PATCH, RequestMethod.POST, RequestMethod.PUT})
     @Transactional
-    public ResponseEntity<?> updateItemStatus(@PathVariable UUID itemId, @RequestBody Map<String, String> body) {
-        String newStatus = body.getOrDefault("status", "COMPLETED");
+    public ResponseEntity<?> updateItemStatus(
+            @PathVariable UUID itemId, 
+            @RequestBody(required = false) Map<String, String> body,
+            @RequestParam(required = false) String status) {
+        String newStatus = status;
+        if (newStatus == null && body != null) {
+            newStatus = body.get("status");
+        }
+        if (newStatus == null || newStatus.isBlank()) {
+            newStatus = "COMPLETED";
+        }
+        final String targetStatus = newStatus;
         return roadmapItemRepository.findById(itemId)
                 .map(item -> {
-                    item.setStatus(newStatus);
+                    item.setStatus(targetStatus);
                     roadmapItemRepository.save(item);
-                    return ResponseEntity.ok(Map.of("status", "updated", "itemId", itemId, "newStatus", newStatus));
+                    return ResponseEntity.ok(Map.of("status", "updated", "itemId", itemId, "newStatus", targetStatus));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

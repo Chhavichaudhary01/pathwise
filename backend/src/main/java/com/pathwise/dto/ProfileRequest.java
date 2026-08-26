@@ -1,12 +1,16 @@
 package com.pathwise.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 
 @Data
 public class ProfileRequest {
     private String goal;
+    private Integer age;
+    private String classGrade;
+    private String board;
+    private String address;
+    private Boolean isProfileComplete;
     private Object currentSkills;
     private Object interests;
     private Object learningHistory;

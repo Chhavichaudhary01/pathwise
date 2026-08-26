@@ -89,20 +89,19 @@ export default function SkillGraphView() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        
-        {/* Navigation & Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600 mb-2">
-              &larr; Back to Dashboard
-            </Button>
-            <h1 className="text-3xl font-extrabold text-slate-900">Skill Graph (Prerequisite DAG)</h1>
-            <p className="text-slate-600 text-sm">
-              Live Directed Acyclic Graph showing prerequisite sequencing for <strong className="text-slate-900">{roadmapTitle}</strong>.
-            </p>
-          </div>
+    <div className="space-y-6 w-full max-w-6xl mx-auto">
+      
+      {/* Navigation & Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600 mb-1">
+            &larr; Back to Dashboard
+          </Button>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Skill Graph (Prerequisite DAG)</h1>
+          <p className="text-slate-500 text-xs mt-0.5">
+            Live Directed Acyclic Graph showing prerequisite sequencing for <strong className="text-slate-900">{roadmapTitle}</strong>.
+          </p>
+        </div>
           
           <div className="flex items-center gap-2 text-xs font-semibold">
             <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-500"></span> Mastered</span>
@@ -256,7 +255,6 @@ export default function SkillGraphView() {
           </Card>
         )}
 
-      </div>
     </div>
   );
 }

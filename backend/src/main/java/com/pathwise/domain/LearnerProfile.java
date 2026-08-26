@@ -22,6 +22,18 @@ public class LearnerProfile {
 
     private String goal;
 
+    private Integer age;
+
+    @Column(name = "class_grade")
+    private String classGrade;
+
+    private String board;
+
+    private String address;
+
+    @Column(name = "is_profile_complete")
+    private Boolean isProfileComplete;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "current_skills", columnDefinition = "jsonb")
     private String currentSkills;
@@ -50,6 +62,9 @@ public class LearnerProfile {
     protected void onCreate() {
         createdAt = OffsetDateTime.now();
         updatedAt = OffsetDateTime.now();
+        if (isProfileComplete == null) {
+            isProfileComplete = false;
+        }
     }
 
     @PreUpdate

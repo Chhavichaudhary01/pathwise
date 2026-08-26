@@ -39,8 +39,11 @@ public class AuthController {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getId());
+        boolean isComplete = learnerProfileRepository.findByUserId(userDetails.getId())
+                .map(p -> Boolean.TRUE.equals(p.getIsProfileComplete()))
+                .orElse(false);
 
-        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userDetails.getId(), userDetails.getUsername()));
+        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), userDetails.getId(), userDetails.getUsername(), isComplete));
     }
 
     private final com.pathwise.repository.LearnerProfileRepository learnerProfileRepository;
@@ -67,6 +70,7 @@ public class AuthController {
                     .interests("[\"Web Development\", \"Cloud Architecture\"]")
                     .weeklyHours(10)
                     .learningStyle("hands-on")
+                    .isProfileComplete(true)
                     .build();
             learnerProfileRepository.save(profile);
         }
@@ -74,7 +78,7 @@ public class AuthController {
         String jwt = jwtUtils.generateTokenFromUsername(user.getEmail());
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), user.getId(), user.getEmail()));
+        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), user.getId(), user.getEmail(), true));
     }
 
     @PostMapping("/signup")
@@ -89,7 +93,19 @@ public class AuthController {
                 .password(encoder.encode(signUpRequest.getPassword()))
                 .build();
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Initialize incomplete profile for new signups
+        com.pathwise.domain.LearnerProfile profile = com.pathwise.domain.LearnerProfile.builder()
+                .user(savedUser)
+                .isProfileComplete(false)
+                .weeklyHours(10)
+                .learningStyle("hands-on")
+                .currentSkills("[]")
+                .interests("[]")
+                .learningHistory("[]")
+                .build();
+        learnerProfileRepository.save(profile);
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }

@@ -110,9 +110,14 @@ export default function Landing() {
                   Go to Dashboard &rarr;
                 </Button>
               </Link>
+              <Link to="/my-task">
+                <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
+                  📋 My Tasks
+                </Button>
+              </Link>
               <Link to="/onboarding">
                 <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
-                  + Generate New Roadmap
+                  + Generate Roadmap
                 </Button>
               </Link>
               <Link to="/skill-graph">
