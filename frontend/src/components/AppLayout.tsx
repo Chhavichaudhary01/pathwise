@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Sparkles,
   LayoutDashboard,
-  FolderKanban,
   CheckSquare,
   Compass,
   Layers,
@@ -12,6 +10,8 @@ import {
   Award,
   Settings,
   LogOut,
+  FolderKanban,
+  Sparkles,
   Search,
   Bell,
   Mail,
@@ -19,10 +19,12 @@ import {
   Target,
   Clock,
   Menu,
-  X
+  X,
+  UserCheck
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
+import StudentProfileModal from './StudentProfileModal';
 
 export default function AppLayout() {
   const { user, logout } = useAuthStore();
@@ -32,14 +34,23 @@ export default function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [roadmaps, setRoadmaps] = useState<any[]>([]);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [isMandatoryModal, setIsMandatoryModal] = useState(false);
 
   useEffect(() => {
     Promise.all([
       api.get('/profile').catch(() => ({ data: null })),
       api.get('/roadmaps').catch(() => ({ data: [] }))
     ]).then(([pRes, rRes]) => {
-      setProfile(pRes.data || null);
+      const pData = pRes.data || null;
+      setProfile(pData);
       setRoadmaps(rRes.data || []);
+
+      // Check if new user signup who hasn't completed their student profile yet
+      if (pData && pData.isProfileComplete === false) {
+        setIsMandatoryModal(true);
+        setProfileModalOpen(true);
+      }
     });
   }, [location.pathname]);
 
@@ -63,6 +74,7 @@ export default function AppLayout() {
     { label: 'My Tasks', path: '/my-task', icon: CheckSquare },
     { label: 'Coursue LMS', path: '/coursue', icon: Compass },
     { label: 'Roadmaps', path: '/roadmap', icon: Layers },
+    { label: 'Onboarding', path: '/onboarding', icon: Sparkles },
     { label: 'AI Career Coach', path: '/chat', icon: MessageSquare },
     { label: 'Skill Graph (DAG)', path: '/skill-graph', icon: Share2 },
     { label: 'Portfolio', path: '/portfolio', icon: Award },
@@ -108,17 +120,15 @@ export default function AppLayout() {
             {/* Brand Logo */}
             <div className="flex items-center gap-2.5 px-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
               <div className="w-8 h-8 rounded-xl bg-[#5051F9] text-white flex items-center justify-center shadow-xs">
-                <Sparkles className="w-4 h-4 fill-white" />
+                ✦
               </div>
-              <span className="text-xl font-extrabold tracking-tight text-slate-900">
-                PathWise
-              </span>
+              <span className="text-xl font-black tracking-tight text-slate-900">PathWise</span>
             </div>
 
-            {/* Navigation Group */}
-            <div className="space-y-2">
-              <span className="text-[11px] font-bold tracking-wider text-slate-400 px-3 uppercase">
-                Navigation
+            {/* Navigation Menu */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase px-3.5 mb-2 block">
+                MAIN MENU
               </span>
               <nav className="space-y-1 text-xs font-semibold">
                 {navItems.map((item) => {
@@ -126,22 +136,22 @@ export default function AppLayout() {
                   const active = isNavActive(item);
                   return (
                     <button
-                      key={item.label}
+                      key={item.path}
                       onClick={() => {
-                        setMobileMenuOpen(false);
                         navigate(item.path);
+                        setMobileMenuOpen(false);
                       }}
                       className={`
-                        w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl transition-all text-left relative
+                        w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl transition-all cursor-pointer text-left relative group
                         ${active
-                          ? 'text-[#5051F9] font-bold bg-white shadow-xs'
+                          ? 'bg-white text-[#5051F9] font-bold shadow-xs border border-purple-100'
                           : 'text-slate-500 hover:text-slate-900 hover:bg-white/60'}
                       `}
                     >
                       {active && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-[#5051F9] rounded-r-full"></span>
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-[#5051F9] rounded-r-full" />
                       )}
-                      <Icon className="w-4 h-4" />
+                      <Icon className={`w-4 h-4 transition-colors ${active ? 'text-[#5051F9]' : 'text-slate-400 group-hover:text-slate-600'}`} />
                       <span>{item.label}</span>
                     </button>
                   );
@@ -149,35 +159,79 @@ export default function AppLayout() {
               </nav>
             </div>
 
-            {/* Target Goal Summary Card */}
-            <div className="p-4 bg-white rounded-2xl border border-slate-100 shadow-2xs space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase">
-                <span>Active Target</span>
-                <Target className="w-3.5 h-3.5 text-[#5051F9]" />
+            {/* Student Profile Quick Card */}
+            <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Student Profile</span>
+                <button
+                  onClick={() => {
+                    setIsMandatoryModal(false);
+                    setProfileModalOpen(true);
+                  }}
+                  className="text-[10px] font-bold text-[#5051F9] hover:underline cursor-pointer"
+                >
+                  Edit
+                </button>
               </div>
-              <h5 className="text-xs font-extrabold text-slate-900 leading-snug truncate">
-                {currentGoal}
-              </h5>
-              <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
-                <Clock className="w-3 h-3 text-slate-400" />
-                <span>{weeklyHours} hrs/week pacing</span>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center font-bold text-xs">
+                    {profile?.classGrade ? '🎓' : '👤'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 truncate">
+                      {profile?.classGrade || 'Class / Grade Not Set'}
+                    </p>
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {profile?.board || 'Board / University'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-50 flex items-center justify-between text-[10px] font-medium text-slate-500">
+                  <span>Age: {profile?.age ? `${profile.age} yrs` : 'N/A'}</span>
+                  <span>{weeklyHours}h/wk</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Target Goal Card */}
+            <div className="bg-gradient-to-br from-[#4F46E5] to-[#6366F1] text-white rounded-3xl p-4 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-200">Active Goal</span>
+                <Target className="w-3.5 h-3.5 text-blue-200" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xs font-extrabold text-white line-clamp-2 leading-tight">
+                  {currentGoal}
+                </h4>
+                <p className="text-[10px] text-blue-100 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  <span>Pacing: {weeklyHours}h/week</span>
+                </p>
               </div>
             </div>
 
           </div>
 
-          {/* Settings & Logout */}
-          <div className="space-y-1 pt-4 text-xs font-semibold">
-            <span className="text-[11px] font-bold tracking-wider text-slate-400 px-3 uppercase block mb-2">
-              Settings
-            </span>
+          {/* Bottom Settings & Logout */}
+          <div className="pt-4 border-t border-slate-200/60 space-y-1 text-xs font-semibold">
             <button
               onClick={() => {
-                setMobileMenuOpen(false);
-                navigate('/settings');
+                setIsMandatoryModal(false);
+                setProfileModalOpen(true);
               }}
+              className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-white/60 transition-all text-left cursor-pointer"
+            >
+              <UserCheck className="w-4 h-4 text-slate-400" />
+              <span>Edit Profile</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/settings')}
               className={`
-                w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl transition-all text-left
+                w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl transition-all text-left cursor-pointer
                 ${currentPath === '/settings' ? 'text-[#5051F9] font-bold bg-white shadow-xs' : 'text-slate-500 hover:text-slate-900 hover:bg-white/60'}
               `}
             >
@@ -187,7 +241,7 @@ export default function AppLayout() {
 
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[#F97316] hover:bg-orange-50/50 transition-all text-left"
+              className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[#F97316] hover:bg-orange-50/50 transition-all text-left cursor-pointer"
             >
               <LogOut className="w-4 h-4 text-[#F97316]" />
               <span>Logout</span>
@@ -235,7 +289,7 @@ export default function AppLayout() {
               </button>
 
               <button 
-                className="relative w-9 h-9 rounded-full bg-white border border-slate-200/70 flex items-center justify-center text-slate-600 hover:bg-slate-50 shadow-2xs transition-colors"
+                className="relative w-9 h-9 rounded-full bg-white border border-slate-200/70 flex items-center justify-center text-slate-600 hover:bg-slate-50 shadow-2xs transition-colors cursor-pointer"
                 title="Notifications"
               >
                 <Bell className="w-4 h-4" />
@@ -243,8 +297,12 @@ export default function AppLayout() {
               </button>
 
               <div 
-                onClick={() => navigate('/settings')}
+                onClick={() => {
+                  setIsMandatoryModal(false);
+                  setProfileModalOpen(true);
+                }}
                 className="flex items-center gap-2.5 bg-white border border-slate-200/70 py-1 px-2.5 rounded-full shadow-2xs cursor-pointer hover:border-purple-200 transition-colors"
+                title="Click to edit profile"
               >
                 <div className="w-7 h-7 rounded-full overflow-hidden bg-purple-100">
                   <img
@@ -267,6 +325,19 @@ export default function AppLayout() {
         </div>
 
       </div>
+
+      {/* Student Profile Completion / Edit Modal */}
+      <StudentProfileModal
+        isOpen={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        initialProfile={profile}
+        mandatory={isMandatoryModal}
+        onProfileUpdated={(updated) => {
+          setProfile(updated);
+          setIsMandatoryModal(false);
+        }}
+      />
+
     </div>
   );
 }

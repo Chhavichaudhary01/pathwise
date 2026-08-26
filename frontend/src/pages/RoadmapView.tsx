@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { CheckCircle2, Circle, Clock, ExternalLink, MessageSquare, Sparkles, BookOpen } from 'lucide-react';
 import api from '@/lib/api';
+import RoadmapMermaidGraph from '@/components/RoadmapMermaidGraph';
 
 interface CatalogItem {
   id: string;
@@ -33,7 +35,7 @@ interface Milestone {
   items: RoadmapItem[];
 }
 
-interface RoadmapData {
+interface Roadmap {
   id: string;
   title: string;
   status: string;
@@ -42,245 +44,112 @@ interface RoadmapData {
 }
 
 interface QuizQuestion {
-  id: number;
+  id: string;
   question: string;
   options: string[];
   correctIndex: number;
   explanation: string;
 }
 
-const DEMO_ROADMAP: RoadmapData = {
-  id: 'demo',
-  title: 'Full Stack & Frontend Developer Roadmap',
-  status: 'ACTIVE',
-  createdAt: new Date().toISOString(),
-  milestones: [
-    {
-      id: 'm1',
-      title: 'Phase 1: Foundations & Web Fundamentals',
-      description: 'Master core HTML, CSS, JavaScript, and essential web fundamentals.',
-      orderIndex: 1,
-      items: [
-        {
-          id: 'i1',
-          status: 'COMPLETED',
-          feedback: 'GOOD_FIT',
-          aiExplanation: 'Immediate hands-on project to cut early dropout and build semantic web structure.',
-          orderIndex: 1,
-          catalogItem: {
-            id: 'c1',
-            title: 'Hands-on Micro-Project: Build an Accessible Responsive Landing Page',
-            description: 'Learn accessibility, responsive layouts, and standard semantic elements in under an hour.',
-            format: 'project',
-            estimatedHours: 1.0,
-            provider: 'PathWise Academy',
-            difficulty: 'beginner',
-            url: 'https://developer.mozilla.org',
-            skills: ['HTML5', 'Accessibility', 'CSS3']
-          }
-        },
-        {
-          id: 'i2',
-          status: 'IN_PROGRESS',
-          feedback: null,
-          aiExplanation: 'Required prerequisite for React. Teaches DOM manipulation, async JavaScript, and event listeners.',
-          orderIndex: 2,
-          catalogItem: {
-            id: 'c2',
-            title: 'JavaScript ES6+ Deep Dive & Asynchronous Programming',
-            description: 'Master closures, promises, async/await, and array transformations.',
-            format: 'course',
-            estimatedHours: 8.0,
-            provider: 'PathWise Academy',
-            difficulty: 'beginner',
-            url: 'https://javascript.info',
-            skills: ['JavaScript', 'ES6']
-          }
-        }
-      ]
-    },
-    {
-      id: 'm2',
-      title: 'Phase 2: Modern Frontend Frameworks & State Management',
-      description: 'Build interactive Single Page Applications using React and component-driven architecture.',
-      orderIndex: 2,
-      items: [
-        {
-          id: 'i3',
-          status: 'TODO',
-          feedback: null,
-          aiExplanation: 'The industry-standard frontend library that matches your goal. Connects JavaScript knowledge to UI state.',
-          orderIndex: 1,
-          catalogItem: {
-            id: 'c3',
-            title: 'React 18: Hooks, Routing & State Management',
-            description: 'Component lifecycles, custom hooks, Zustand, and client-side routing.',
-            format: 'course',
-            estimatedHours: 12.0,
-            provider: 'PathWise Academy',
-            difficulty: 'intermediate',
-            url: 'https://react.dev',
-            skills: ['React', 'Zustand', 'Routing']
-          }
-        },
-        {
-          id: 'i4',
-          status: 'TODO',
-          feedback: null,
-          aiExplanation: 'Outside your usual path — worth a look: Introduces UI/UX accessibility standards for enterprise design.',
-          orderIndex: 2,
-          catalogItem: {
-            id: 'c4',
-            title: 'Wildcard: Inclusive Design & WCAG 2.2 Accessibility Auditing',
-            description: 'Learn keyboard navigation, contrast ratios, and screen-reader testing.',
-            format: 'article',
-            estimatedHours: 3.0,
-            provider: 'PathWise Insights',
-            difficulty: 'intermediate',
-            url: 'https://www.w3.org/WAI',
-            skills: ['Accessibility', 'UX Design']
-          }
-        }
-      ]
-    }
-  ]
-};
-
 export default function RoadmapView() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [roadmap, setRoadmap] = useState<RoadmapData | null>(null);
+  const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(true);
-
-  // Adaptation narration banner
   const [narration, setNarration] = useState<string | null>(null);
 
-  // Mastery Quiz state
+  // Quiz Modal State
   const [quizModalOpen, setQuizModalOpen] = useState(false);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizMilestoneId, setQuizMilestoneId] = useState<string | null>(null);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
-  const [selectedAnswers, setSelectedAnswers] = useState<{ [qId: number]: number }>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: string]: number }>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!id || id === 'demo' || id === 'undefined') {
-      api.get('/roadmaps')
-        .then((res) => {
-          if (res.data && res.data.length > 0) {
-            setRoadmap(res.data[0]);
-          } else {
-            setRoadmap(DEMO_ROADMAP);
-          }
-        })
-        .catch(() => setRoadmap(DEMO_ROADMAP))
-        .finally(() => setLoading(false));
-      return;
-    }
+  // Inline Feedback State
+  const [feedbackModalItem, setFeedbackModalItem] = useState<string | null>(null);
 
-    api.get(`/roadmaps/${id}`)
-      .then((res) => {
-        if (res.data && res.data.milestones && res.data.milestones.length > 0) {
-          setRoadmap(res.data);
-        } else {
-          return api.get('/roadmaps').then((rRes) => {
-            if (rRes.data && rRes.data.length > 0) {
-              setRoadmap(rRes.data[0]);
-            } else {
-              setRoadmap(DEMO_ROADMAP);
-            }
-          });
-        }
-      })
-      .catch(() => {
-        api.get('/roadmaps')
-          .then((rRes) => {
-            if (rRes.data && rRes.data.length > 0) {
-              setRoadmap(rRes.data[0]);
-            } else {
-              setRoadmap(DEMO_ROADMAP);
-            }
-          })
-          .catch(() => setRoadmap(DEMO_ROADMAP));
-      })
-      .finally(() => setLoading(false));
+  useEffect(() => {
+    fetchRoadmap();
   }, [id]);
 
-  const toggleItemStatus = async (itemId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'COMPLETED' ? 'TODO' : 'COMPLETED';
-    
+  const fetchRoadmap = async () => {
+    try {
+      setLoading(true);
+      const endpoint = id ? `/roadmaps/${id}` : '/roadmaps/current';
+      const res = await api.get(endpoint);
+      setRoadmap(res.data);
+    } catch (err) {
+      console.error('Failed to load roadmap:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleItemStatus = async (itemId: string, currentStatus: string, explicitNextStatus?: string) => {
+    let nextStatus = explicitNextStatus;
+    if (!nextStatus) {
+      if (currentStatus === 'COMPLETED') {
+        nextStatus = 'NOT_STARTED';
+      } else if (currentStatus === 'IN_PROGRESS') {
+        nextStatus = 'COMPLETED';
+      } else {
+        nextStatus = 'IN_PROGRESS';
+      }
+    }
+
+    // Optimistic UI update so buttons respond instantly
     setRoadmap((prev) => {
-      if (!prev) return prev;
-      const updatedMilestones = prev.milestones.map((m) => ({
-        ...m,
-        items: m.items.map((i) => (i.id === itemId ? { ...i, status: newStatus } : i))
-      }));
-      return { ...prev, milestones: updatedMilestones };
+      if (!prev) return null;
+      return {
+        ...prev,
+        milestones: prev.milestones.map((m) => ({
+          ...m,
+          items: m.items.map((it) => (it.id === itemId ? { ...it, status: nextStatus } : it))
+        }))
+      };
     });
 
-    if (id !== 'demo') {
-      try {
-        await api.patch(`/roadmaps/items/${itemId}/status`, { status: newStatus });
-      } catch (err) {
-        console.error(err);
-      }
-    }
-  };
-
-  const handleFeedback = async (itemId: string, feedbackType: string) => {
     try {
-      let resNarration = "Pacing updated.";
-      if (id !== 'demo') {
-        const res = await api.post(`/roadmaps/items/${itemId}/feedback`, { feedback: feedbackType });
-        resNarration = res.data.narration;
-      } else {
-        resNarration = feedbackType === 'TOO_HARD' 
-          ? "PathWise detected this topic is challenging. Dynamically recalibrated your roadmap with foundational resources."
-          : "Great velocity! PathWise fast-tracked your roadmap towards advanced capstones.";
-      }
-
-      setNarration(resNarration);
-      setTimeout(() => setNarration(null), 8000);
+      await api.patch(`/roadmaps/items/${itemId}/status`, { status: nextStatus }, {
+        params: { status: nextStatus }
+      });
     } catch (err) {
-      console.error(err);
+      console.error('Failed to update status:', err);
     }
   };
 
-  const [activeQuizMilestoneId, setActiveQuizMilestoneId] = useState<string | null>(null);
+  const handleFeedback = async (itemId: string, feedback: string) => {
+    try {
+      const res = await api.post(`/roadmaps/items/${itemId}/feedback`, { feedback });
+      if (res.data && res.data.roadmap) {
+        setRoadmap(res.data.roadmap);
+        setNarration(res.data.narration || 'Your roadmap has been adapted based on your pacing!');
+        setTimeout(() => setNarration(null), 8000);
+      }
+      setFeedbackModalItem(null);
+    } catch (err) {
+      console.error('Failed to submit feedback:', err);
+    }
+  };
 
-  const openQuiz = (milestoneId: string) => {
-    setActiveQuizMilestoneId(milestoneId);
+  const openQuiz = async (milestoneId: string) => {
+    setQuizMilestoneId(milestoneId);
     setQuizModalOpen(true);
     setQuizSubmitted(false);
     setSelectedAnswers({});
     setQuizScore(null);
+    setQuizLoading(true);
 
-    api.get(`/roadmaps/milestones/${milestoneId}/quiz`)
-      .then((res) => setQuizQuestions(res.data.questions || []))
-      .catch(() => {
-        setQuizQuestions([
-          {
-            id: 1,
-            question: "What is the primary benefit of semantic HTML over generic <div> elements?",
-            options: ["Faster GPU rendering", "Better accessibility, SEO, and document structure", "Auto CSS styling", "Reduces file size"],
-            correctIndex: 1,
-            explanation: "Semantic tags like <nav> and <article> provide semantic clarity for assistive tech."
-          },
-          {
-            id: 2,
-            question: "What does the async/await syntax in ES6+ provide?",
-            options: ["Blocks thread execution", "Syntactic sugar over Promises for readable async code", "Browser multithreading", "Auto-memoization"],
-            correctIndex: 1,
-            explanation: "async/await simplifies Promise chaining into sequential-like code."
-          },
-          {
-            id: 3,
-            question: "When scheduling prerequisite skills with a DAG, what does Topological Sorting prevent?",
-            options: ["Starting advanced topics before their prerequisites are mastered", "Alphabetical course ordering", "Database indexing", "CSS layout shifts"],
-            correctIndex: 0,
-            explanation: "Topological sorting guarantees all prerequisite competencies are covered before downstream dependents."
-          }
-        ]);
-      });
+    try {
+      const res = await api.get(`/roadmaps/milestones/${milestoneId}/quiz`);
+      setQuizQuestions(res.data.questions || []);
+    } catch (err) {
+      console.error('Failed to load quiz:', err);
+    } finally {
+      setQuizLoading(false);
+    }
   };
 
   const submitQuiz = () => {
@@ -290,12 +159,12 @@ export default function RoadmapView() {
         correct++;
       }
     });
-    const percent = Math.round((correct / quizQuestions.length) * 100);
-    setQuizScore(percent);
+    const percentage = Math.round((correct / quizQuestions.length) * 100);
+    setQuizScore(percentage);
     setQuizSubmitted(true);
 
-    if (percent >= 70 && activeQuizMilestoneId && roadmap) {
-      const targetMilestone = roadmap.milestones.find(m => m.id === activeQuizMilestoneId);
+    if (percentage >= 70 && quizMilestoneId && roadmap) {
+      const targetMilestone = roadmap.milestones.find((m) => m.id === quizMilestoneId);
       if (targetMilestone) {
         targetMilestone.items.forEach(async (it) => {
           if (it.status !== 'COMPLETED') {
@@ -308,10 +177,10 @@ export default function RoadmapView() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
+      <div className="min-h-[400px] flex items-center justify-center p-8">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-slate-600 font-medium">Loading your personalized roadmap...</p>
+          <div className="w-10 h-10 border-3 border-[#5051F9] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs font-semibold text-slate-500">Loading personalized roadmap & visual DAG...</p>
         </div>
       </div>
     );
@@ -323,75 +192,78 @@ export default function RoadmapView() {
   const totalHours = allItems.reduce((acc, curr) => acc + (curr.catalogItem?.estimatedHours || 5), 0);
 
   return (
-    <div className="space-y-6 w-full max-w-5xl mx-auto">
+    <div className="space-y-6 w-full max-w-7xl mx-auto pb-12">
       
       {/* Navigation & Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600 -ml-2 text-xs font-bold">
             &larr; Dashboard
           </Button>
           <Button variant="outline" onClick={() => navigate('/skill-graph')} className="text-xs font-bold text-[#5051F9] bg-[#EDE9FE] border-purple-200 rounded-full">
-            🕸️ View Skill Graph (DAG)
+            🕸️ Full Skill Graph
           </Button>
           <Button variant="outline" onClick={() => navigate('/portfolio')} className="text-xs font-bold rounded-full">
-            📜 Mastery Portfolio
+            📜 Portfolio
           </Button>
         </div>
           
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-slate-700">Progress: {progressPercent}%</span>
-            <div className="w-32 bg-slate-200 rounded-full h-2.5 overflow-hidden">
-              <div 
-                className="bg-green-600 h-2.5 rounded-full transition-all duration-500" 
-                style={{ width: `${progressPercent}%` }}
-              ></div>
-            </div>
+        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-slate-100 shadow-2xs">
+          <span className="text-xs font-bold text-slate-700">Roadmap Progress: {progressPercent}%</span>
+          <div className="w-28 bg-slate-100 rounded-full h-2 overflow-hidden">
+            <div 
+              className="bg-[#5051F9] h-2 rounded-full transition-all duration-500" 
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
         </div>
+      </div>
 
-        {/* Adaptive Recalibration Narration Banner */}
-        {narration && (
-          <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg flex items-center gap-3 animate-in slide-in-from-top duration-300">
-            <span className="text-2xl">⚡</span>
-            <div>
-              <h4 className="font-bold text-sm">Roadmap Visibly Re-Adapted!</h4>
-              <p className="text-xs text-blue-100">{narration}</p>
-            </div>
+      {/* Adaptive Recalibration Narration Banner */}
+      {narration && (
+        <div className="p-4 bg-gradient-to-r from-[#4F46E5] to-[#6366F1] text-white rounded-2xl shadow-sm flex items-center gap-3 animate-in slide-in-from-top duration-300">
+          <span className="text-2xl">⚡</span>
+          <div>
+            <h4 className="font-bold text-xs">Roadmap Visibly Re-Adapted!</h4>
+            <p className="text-[11px] text-blue-100">{narration}</p>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Roadmap Banner */}
-        <Card className="border-none shadow-sm bg-gradient-to-r from-slate-900 via-slate-800 to-blue-950 text-white">
-          <CardHeader>
-            <div className="flex flex-wrap items-center gap-2 text-blue-300 text-xs font-semibold uppercase tracking-wider mb-1">
-              <span>🎯 Topological DAG Verified</span>
-              <span>•</span>
-              <span>Total Est. Time: ~{Math.round(totalHours)} Hours</span>
-              <span>•</span>
-              <span>~{Math.max(1, Math.round(totalHours / 10))} Weeks at 10h/wk</span>
-            </div>
-            <CardTitle className="text-3xl font-extrabold text-white">{roadmap?.title}</CardTitle>
-            <CardDescription className="text-slate-300 text-sm">
-              Grounded in empirical learning research: Immediate hands-on projects, zero circular dependencies, and verifiable mastery assessments.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      {/* Roadmap Hero Banner */}
+      <Card className="border border-slate-100 shadow-sm bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white rounded-3xl overflow-hidden">
+        <CardHeader className="p-6 md:p-8">
+          <div className="flex flex-wrap items-center gap-2 text-blue-300 text-[10px] font-extrabold uppercase tracking-wider mb-1">
+            <span className="bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-400/30">🎯 Topological DAG Verified</span>
+            <span>•</span>
+            <span>Est. ~{Math.round(totalHours)} Hours</span>
+            <span>•</span>
+            <span>~{Math.max(1, Math.round(totalHours / 10))} Weeks at 10h/wk</span>
+          </div>
+          <CardTitle className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">{roadmap?.title}</CardTitle>
+          <CardDescription className="text-slate-300 text-xs mt-1">
+            Curated 3-Phase milestone sequence: Hands-on project start, zero circular dependencies, and live Mermaid DAG dependency visualization.
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
-        {/* Milestones & Items Timeline */}
-        <div className="space-y-8">
+      {/* Main 2-Column Section: Phases Timeline on Left, Visual Mermaid Graph on Right */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left: Phases & Items Timeline (7 cols) */}
+        <div className="lg:col-span-7 space-y-8 min-w-0">
           {roadmap?.milestones?.map((milestone, mIdx) => (
             <div key={milestone.id || mIdx} className="space-y-4">
               
               {/* Phase Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-sm shadow-sm">
+                  <div className="w-8 h-8 rounded-xl bg-[#5051F9] text-white font-extrabold flex items-center justify-center text-xs shadow-2xs">
                     {mIdx + 1}
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-slate-900">{milestone.title}</h2>
-                    <p className="text-xs text-slate-500">{milestone.description}</p>
+                    <h2 className="text-base font-extrabold text-slate-900 leading-tight">{milestone.title}</h2>
+                    <p className="text-[11px] text-slate-400 font-medium">{milestone.description}</p>
                   </div>
                 </div>
 
@@ -399,137 +271,167 @@ export default function RoadmapView() {
                   size="sm" 
                   variant="outline" 
                   onClick={() => openQuiz(milestone.id)}
-                  className="text-xs font-semibold self-start sm:self-auto border-blue-200 text-blue-700 hover:bg-blue-50"
+                  className="text-[11px] font-bold self-start sm:self-auto border-purple-200 text-[#5051F9] hover:bg-purple-50 rounded-full cursor-pointer"
                 >
-                  📝 Take Phase {mIdx + 1} Mastery Check
+                  📝 Phase {mIdx + 1} Quiz
                 </Button>
               </div>
 
-              {/* Phase Items List */}
-              <div className="grid grid-cols-1 gap-4 pl-3 md:pl-10 border-l-2 border-slate-200">
+              {/* Items in Milestone */}
+              <div className="space-y-3">
                 {milestone.items?.map((item, iIdx) => {
-                  const isDone = item.status === 'COMPLETED';
-                  const ci = item.catalogItem || {};
-                  const isWildcard = item.aiExplanation?.includes('Outside your usual path') || ci.title?.includes('Wildcard');
+                  const isCompleted = item.status === 'COMPLETED';
+                  const isInProgress = item.status === 'IN_PROGRESS';
+                  const ci = item.catalogItem || ({} as CatalogItem);
 
                   return (
                     <Card 
                       key={item.id || iIdx} 
-                      className={`transition-all duration-200 border ${
-                        isDone 
-                          ? 'bg-slate-50/80 border-green-300 opacity-90' 
-                          : isWildcard
-                            ? 'bg-amber-50/40 border-amber-300 shadow-sm'
-                            : 'bg-white hover:border-blue-300 shadow-sm'
+                      className={`transition-all border rounded-2xl ${
+                        isCompleted 
+                          ? 'bg-emerald-50/30 border-emerald-200/80 shadow-none' 
+                          : isInProgress 
+                          ? 'bg-purple-50/20 border-purple-200 shadow-2xs' 
+                          : 'bg-white border-slate-100 hover:border-slate-200 shadow-2xs'
                       }`}
                     >
-                      <CardContent className="p-5 space-y-4">
+                      <CardContent className="p-4 space-y-3">
                         
-                        {/* Top row: Checkbox, Title & Badges */}
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-3">
-                            <button
-                              onClick={() => toggleItemStatus(item.id, item.status)}
-                              className={`mt-1 w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${
-                                isDone 
-                                  ? 'bg-green-600 border-green-600 text-white' 
-                                  : 'border-slate-300 hover:border-blue-500'
-                              }`}
-                              title={isDone ? 'Mark Incomplete' : 'Mark Complete'}
-                            >
-                              {isDone && '✓'}
-                            </button>
-                            
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <h3 className={`text-base md:text-lg font-bold ${isDone ? 'line-through text-slate-500' : 'text-slate-900'}`}>
-                                  {ci.title || `Resource ${iIdx + 1}`}
-                                </h3>
-                                {isWildcard && (
-                                  <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold uppercase">
-                                    🌟 Wildcard Serendipity
-                                  </span>
+                        {/* Item Top Info */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] uppercase font-extrabold px-2.5 py-0.5 rounded-full ${
+                                ci.format === 'PROJECT' 
+                                  ? 'bg-amber-100 text-amber-800 font-bold border border-amber-200' 
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {ci.format === 'PROJECT' ? '🛠️ Project Start' : ci.format || 'Course'}
+                              </span>
+                              <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                ~{ci.estimatedHours || 5} Hours
+                              </span>
+                              <span className="text-[11px] text-slate-400 font-medium">
+                                • {ci.difficulty || 'Intermediate'}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleItemStatus(item.id, item.status, isCompleted ? 'NOT_STARTED' : 'COMPLETED')}
+                                className="cursor-pointer text-slate-400 hover:text-[#5051F9] p-0.5"
+                                title={isCompleted ? 'Mark Incomplete' : 'Mark Completed'}
+                              >
+                                {isCompleted ? (
+                                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                ) : (
+                                  <Circle className="w-5 h-5" />
                                 )}
-                              </div>
-                              <p className="text-xs md:text-sm text-slate-600 mt-0.5">{ci.description}</p>
+                              </button>
+                              <h3 className={`text-sm font-bold ${isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                                {ci.title || `Skill Item ${iIdx + 1}`}
+                              </h3>
                             </div>
                           </div>
 
-                          <span className={`text-xs px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
-                            ci.difficulty === 'beginner' 
-                              ? 'bg-green-100 text-green-800' 
-                              : ci.difficulty === 'intermediate' 
-                                ? 'bg-amber-100 text-amber-800' 
-                                : 'bg-purple-100 text-purple-800'
-                          }`}>
-                            {ci.difficulty || 'Core'}
-                          </span>
+                          {/* Status Action Button */}
+                          <div className="flex items-center gap-2 self-start sm:self-auto">
+                            <button
+                              type="button"
+                              onClick={() => toggleItemStatus(item.id, item.status, isCompleted ? 'NOT_STARTED' : isInProgress ? 'COMPLETED' : 'IN_PROGRESS')}
+                              className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all cursor-pointer shadow-2xs ${
+                                isCompleted 
+                                  ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' 
+                                  : isInProgress 
+                                  ? 'bg-[#5051F9] text-white hover:bg-indigo-700' 
+                                  : 'bg-slate-100 text-slate-700 hover:bg-purple-100 hover:text-[#5051F9]'
+                              }`}
+                            >
+                              {isCompleted ? '✓ Completed' : isInProgress ? '⚡ In Progress' : 'Start Skill'}
+                            </button>
+                          </div>
                         </div>
 
-                        {/* Metadata Pills */}
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                          <span className="bg-slate-100 px-2 py-0.5 rounded font-medium capitalize">
-                            📦 {ci.format || 'Course'}
-                          </span>
-                          <span className="bg-slate-100 px-2 py-0.5 rounded font-medium">
-                            ⏱️ ~{ci.estimatedHours || 5}h Segment
-                          </span>
-                          <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded font-semibold border border-green-200">
-                            🌿 Verified Fresh
-                          </span>
-                          {ci.skills?.map((skill) => (
-                            <span key={skill} className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium border border-blue-100">
-                              #{skill}
-                            </span>
-                          ))}
-                        </div>
+                        {ci.description && (
+                          <p className="text-xs text-slate-600 leading-relaxed">
+                            {ci.description}
+                          </p>
+                        )}
 
-                        {/* AI "Why This Milestone?" Callout Box */}
-                        {item.aiExplanation && (
-                          <div className="bg-blue-50/70 border border-blue-100 rounded-lg p-3 text-xs md:text-sm text-slate-700 flex items-start gap-2">
-                            <span className="text-blue-600 text-base">✨</span>
-                            <div>
-                              <span className="font-semibold text-blue-900">Why this resource? </span>
-                              <span>{item.aiExplanation}</span>
-                            </div>
+                        {/* Skill Tags */}
+                        {ci.skills && ci.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {ci.skills.map((s, sIdx) => (
+                              <span key={sIdx} className="text-[10px] bg-slate-100 text-slate-600 font-semibold px-2 py-0.5 rounded-md">
+                                #{s}
+                              </span>
+                            ))}
                           </div>
                         )}
 
-                        {/* Feedback & Open Link */}
-                        <div className="pt-1 flex flex-wrap justify-between items-center gap-2 border-t text-xs">
-                          <div className="flex items-center gap-1.5 text-slate-500">
-                            <span>Pacing fit:</span>
-                            <button
-                              onClick={() => handleFeedback(item.id, 'GOOD_FIT')}
-                              className="px-2 py-1 bg-slate-100 hover:bg-green-50 hover:text-green-700 rounded transition-colors"
-                            >
-                              👍 Good Fit
-                            </button>
-                            <button
-                              onClick={() => handleFeedback(item.id, 'TOO_HARD')}
-                              className="px-2 py-1 bg-slate-100 hover:bg-amber-50 hover:text-amber-700 rounded transition-colors"
-                            >
-                              📉 Too Hard
-                            </button>
-                            <button
-                              onClick={() => handleFeedback(item.id, 'TOO_EASY')}
-                              className="px-2 py-1 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors"
-                            >
-                              📈 Too Easy
-                            </button>
+                        {/* AI Explanation Callout */}
+                        {item.aiExplanation && (
+                          <div className="p-2.5 bg-[#F8F9FD] border border-purple-100 rounded-xl text-xs text-slate-700 flex items-start gap-2">
+                            <Sparkles className="w-3.5 h-3.5 text-[#5051F9] shrink-0 mt-0.5" />
+                            <p className="flex-1 text-[11px] leading-normal font-medium text-slate-700">
+                              <span className="font-bold text-[#5051F9]">Sequencing Rationale: </span>
+                              {item.aiExplanation}
+                            </p>
                           </div>
+                        )}
 
-                          {ci.url && (
+                        {/* Action Link & Feedback */}
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                          {ci.url ? (
                             <a 
                               href={ci.url} 
                               target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
+                              rel="noreferrer" 
+                              className="text-[#5051F9] font-bold hover:underline inline-flex items-center gap-1 text-[11px]"
                             >
-                              Open Resource &rarr;
+                              <span>Resource Material</span>
+                              <ExternalLink className="w-3 h-3" />
                             </a>
+                          ) : (
+                            <span className="text-[10px] text-slate-400">Curated by PathWise</span>
                           )}
+
+                          <button 
+                            onClick={() => setFeedbackModalItem(item.id)}
+                            className="text-slate-400 hover:text-slate-700 text-[11px] font-medium cursor-pointer inline-flex items-center gap-1"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            <span>Flag Pacing</span>
+                          </button>
                         </div>
+
+                        {/* Inline Feedback */}
+                        {feedbackModalItem === item.id && (
+                          <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-2 mt-2 animate-in fade-in">
+                            <p className="text-xs font-bold text-slate-800">
+                              How is the pacing of this skill? (Recalibrates your path)
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {['TOO_SLOW', 'TOO_FAST', 'TOO_DIFFICULT', 'TOO_EASY', 'IRRELEVANT'].map((reason) => (
+                                <button
+                                  key={reason}
+                                  onClick={() => handleFeedback(item.id, reason)}
+                                  className="text-[10px] px-2.5 py-1 bg-white border border-slate-200 hover:border-purple-300 hover:text-[#5051F9] rounded-lg font-bold transition-colors cursor-pointer"
+                                >
+                                  {reason.replace('_', ' ')}
+                                </button>
+                              ))}
+                              <button
+                                onClick={() => setFeedbackModalItem(null)}
+                                className="text-[10px] px-2 py-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
 
                       </CardContent>
                     </Card>
@@ -541,88 +443,115 @@ export default function RoadmapView() {
           ))}
         </div>
 
-        {/* Mastery Quiz Interactive Modal */}
-        {quizModalOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <Card className="w-full max-w-2xl bg-white shadow-2xl border max-h-[90vh] flex flex-col">
-              <CardHeader className="bg-slate-900 text-white">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg text-white">📝 Milestone Mastery Assessment</CardTitle>
-                  <button onClick={() => setQuizModalOpen(false)} className="text-slate-400 hover:text-white">✕</button>
+        {/* Right: Visual Mermaid DAG Graph (5 cols, sticky) */}
+        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-6">
+          <RoadmapMermaidGraph 
+            roadmapTitle={roadmap?.title}
+            milestones={roadmap?.milestones}
+          />
+        </div>
+
+      </div>
+
+      {/* Mastery Quiz Interactive Modal */}
+      {quizModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <Card className="w-full max-w-xl bg-white shadow-2xl border border-slate-100 rounded-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-[#4F46E5] to-[#6366F1] text-white p-6">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base font-extrabold text-white flex items-center gap-2">
+                  <BookOpen className="w-4 h-4" />
+                  <span>Phase Mastery Assessment</span>
+                </CardTitle>
+                <button 
+                  onClick={() => setQuizModalOpen(false)} 
+                  className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+              <CardDescription className="text-blue-100 text-xs mt-1">
+                Verifies prerequisite retention to update your skill DAG and verifiable credentials.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="p-6 overflow-y-auto space-y-5 flex-1 text-left">
+              {quizLoading ? (
+                <div className="text-center py-10 space-y-2">
+                  <div className="w-8 h-8 border-2 border-[#5051F9] border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p className="text-xs font-semibold text-slate-500">Generating mastery questions...</p>
                 </div>
-                <CardDescription className="text-slate-300 text-xs">
-                  Validates real skill retention to update your verifiable mastery graph.
-                </CardDescription>
-              </CardHeader>
+              ) : quizSubmitted ? (
+                <div className="text-center py-6 space-y-4">
+                  <div className="text-4xl">🎉</div>
+                  <h3 className="text-xl font-extrabold text-slate-900">Score: {quizScore}%</h3>
+                  <p className="text-xs text-slate-600">
+                    {quizScore && quizScore >= 70 
+                      ? 'Mastery verified! Milestone marked completed in your DAG graph.'
+                      : 'Review the explanations below to reinforce your understanding.'}
+                  </p>
 
-              <CardContent className="p-6 overflow-y-auto space-y-6 flex-1">
-                {quizSubmitted ? (
-                  <div className="text-center py-6 space-y-4">
-                    <div className="text-4xl">🎉</div>
-                    <h3 className="text-2xl font-bold text-slate-900">Assessment Score: {quizScore}%</h3>
-                    <p className="text-sm text-slate-600">
-                      {quizScore && quizScore >= 70 
-                        ? 'Mastery verified! Milestone competencies recorded in your skill DAG.'
-                        : 'Review the explanations below to reinforce prerequisite concepts.'}
-                    </p>
-
-                    <div className="space-y-4 text-left pt-4">
-                      {quizQuestions.map((q) => (
-                        <div key={q.id} className="p-4 bg-slate-50 border rounded-lg space-y-1.5 text-xs">
-                          <p className="font-bold text-slate-900 text-sm">{q.question}</p>
-                          <p className="text-green-700 font-semibold">✓ Correct Answer: {q.options[q.correctIndex]}</p>
-                          <p className="text-slate-600">{q.explanation}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <Button onClick={() => setQuizModalOpen(false)} className="w-full mt-4">
-                      Back to Roadmap
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    {quizQuestions.map((q, idx) => (
-                      <div key={q.id} className="space-y-2">
-                        <h4 className="font-bold text-sm text-slate-900">
-                          {idx + 1}. {q.question}
-                        </h4>
-                        <div className="space-y-1.5">
-                          {q.options.map((opt, optIdx) => (
-                            <label 
-                              key={optIdx} 
-                              className={`flex items-center gap-3 p-3 rounded-lg border text-xs cursor-pointer transition-colors ${
-                                selectedAnswers[q.id] === optIdx 
-                                  ? 'bg-blue-50 border-blue-500 text-blue-900 font-semibold' 
-                                  : 'hover:bg-slate-50'
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                name={`q_${q.id}`}
-                                checked={selectedAnswers[q.id] === optIdx}
-                                onChange={() => setSelectedAnswers((prev) => ({ ...prev, [q.id]: optIdx }))}
-                              />
-                              <span>{opt}</span>
-                            </label>
-                          ))}
-                        </div>
+                  <div className="space-y-3 text-left pt-2">
+                    {quizQuestions.map((q) => (
+                      <div key={q.id} className="p-3.5 bg-[#F8F9FD] border border-slate-200/80 rounded-2xl space-y-1 text-xs">
+                        <p className="font-extrabold text-slate-900">{q.question}</p>
+                        <p className="text-emerald-700 font-bold">✓ Answer: {q.options[q.correctIndex]}</p>
+                        <p className="text-slate-500 text-[11px]">{q.explanation}</p>
                       </div>
                     ))}
+                  </div>
 
-                    <Button 
-                      onClick={submitQuiz} 
-                      disabled={Object.keys(selectedAnswers).length < quizQuestions.length}
-                      className="w-full mt-4"
-                    >
-                      Submit Mastery Check 🚀
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                  <button 
+                    onClick={() => setQuizModalOpen(false)} 
+                    className="w-full py-2.5 bg-[#5051F9] hover:bg-indigo-700 text-white text-xs font-bold rounded-full cursor-pointer shadow-xs"
+                  >
+                    Back to Roadmap
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {quizQuestions.map((q, idx) => (
+                    <div key={q.id} className="space-y-2">
+                      <h4 className="font-bold text-xs text-slate-900">
+                        {idx + 1}. {q.question}
+                      </h4>
+                      <div className="space-y-1.5">
+                        {q.options.map((opt, optIdx) => (
+                          <label 
+                            key={optIdx} 
+                            className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                              selectedAnswers[q.id] === optIdx 
+                                ? 'bg-purple-50 border-[#5051F9] text-[#5051F9] font-bold shadow-2xs' 
+                                : 'bg-[#F8F9FD] border-slate-200/70 hover:bg-white text-slate-700'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`q_${q.id}`}
+                              checked={selectedAnswers[q.id] === optIdx}
+                              onChange={() => setSelectedAnswers((prev) => ({ ...prev, [q.id]: optIdx }))}
+                              className="accent-[#5051F9]"
+                            />
+                            <span>{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+
+                  <button 
+                    onClick={submitQuiz} 
+                    disabled={Object.keys(selectedAnswers).length < quizQuestions.length}
+                    className="w-full py-2.5 bg-[#5051F9] hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-full cursor-pointer shadow-xs mt-4"
+                  >
+                    Submit Mastery Check 🚀
+                  </button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
     </div>
   );
