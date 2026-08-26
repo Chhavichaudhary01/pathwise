@@ -13,6 +13,7 @@ import PortfolioView from './pages/PortfolioView';
 import ChatView from './pages/ChatView';
 import SettingsView from './pages/SettingsView';
 import PublicVerification from './pages/PublicVerification';
+import ResourceFinder from './pages/ResourceFinder';
 import FloatingAIAssistant from './components/FloatingAIAssistant';
 import AppLayout from './components/AppLayout';
 
@@ -44,6 +45,7 @@ function App() {
           <Route path="/lms" element={<DashboardCoursue />} />
           <Route path="/roadmap" element={<RoadmapView />} />
           <Route path="/roadmap/:id" element={<RoadmapView />} />
+          <Route path="/resources" element={<ResourceFinder />} />
           <Route path="/skill-graph" element={<SkillGraphView />} />
           <Route path="/portfolio" element={<PortfolioView />} />
           <Route path="/chat" element={<ChatView />} />

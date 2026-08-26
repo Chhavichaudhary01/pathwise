@@ -20,7 +20,8 @@ import {
   Clock,
   Menu,
   X,
-  UserCheck
+  UserCheck,
+  BookOpen
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
@@ -73,6 +74,7 @@ export default function AppLayout() {
     { label: 'Projects', path: '/projects', icon: FolderKanban, alias: '/roadmap' },
     { label: 'My Tasks', path: '/my-task', icon: CheckSquare },
     { label: 'Coursue LMS', path: '/coursue', icon: Compass },
+    { label: 'Resource Hub', path: '/resources', icon: BookOpen },
     { label: 'Roadmaps', path: '/roadmap', icon: Layers },
     { label: 'Onboarding', path: '/onboarding', icon: Sparkles },
     { label: 'AI Career Coach', path: '/chat', icon: MessageSquare },
