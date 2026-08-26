@@ -7,14 +7,13 @@
 
 ## 🌟 Key Highlights & Core Differentiators
 
-* **🧠 Hybrid Recommendation Engine:** Combines vector semantic matching (`text-embedding-004`) with deterministic topological sorting on a skill graph DAG. Zero prerequisite hallucinations.
+* **🧠 Hybrid Recommendation Engine:** Combines vector semantic matching with deterministic topological sorting on a skill graph DAG. Zero prerequisite hallucinations.
 * **⚡ Visible Adaptive Recalibration:** Feedback (*Too Hard*, *Too Easy*) triggers dynamic re-ranking with live AI-written narration.
 * **📝 Mastery Checks, Not Self-Report:** Every milestone is gated by interactive mini-assessments to verify genuine skill retention before advancing.
 * **🌟 Deliberate Serendipity Injection:** Curates multidisciplinary wildcard resources (e.g., UX Accessibility for Frontend developers) to broaden problem-solving capability.
 * **🕸️ Interactive Skill Graph (DAG):** Visualizes prerequisite hierarchies, mastery status, and labor market hiring demand indicators.
 * **📜 Shareable Mastery Portfolio:** Auto-generates a recruiter-ready competency portfolio page suitable for LinkedIn sharing.
-* **💬 Grounded AI Career Coach:** A persistent AI assistant providing contextual guidance grounded in the learner's active goals and roadmap.
-* **🚀 Instant Demo Mode:** Frictionless 1-click exploration without requiring upfront signup.
+* **💬 Grounded AI Career Coach:** A persistent, conversational AI assistant providing adaptive coaching grounded in the learner's active goals and roadmap.
 
 ---
 
@@ -35,9 +34,23 @@ flowchart TD
 
 ---
 
+## 🤖 Generative AI Configuration (Google Gemini)
+
+PathWise is natively powered by **Google Gemini** (`gemini-2.5-flash`, `gemini-flash-latest`, `gemini-pro-latest`).
+
+To enable live Generative AI responses:
+1. Get a **Free Gemini API Key** from [Google AI Studio](https://aistudio.google.com/app/apikey).
+2. Add it to your `backend/.env` file:
+   ```env
+   GEMINI_API_KEY=AIzaSy...your_actual_key_here
+   ```
+*(Note: If no API key is provided, PathWise gracefully activates its deterministic reasoning fallback engine so the app continues functioning seamlessly).*
+
+---
+
 ## 🛠️ Tech Stack
 
-* **Backend:** Java 21, Spring Boot 3.3, Spring Data JPA, Spring Security (JWT + Refresh Tokens), Flyway DB Migrations, Google Gemini 1.5 Flash API.
+* **Backend:** Java 21, Spring Boot 3.3, Spring Data JPA, Spring Security (JWT + Refresh Tokens), Flyway DB Migrations, Google Gemini v1 API.
 * **Database:** Neon Cloud PostgreSQL (Serverless v18.6).
 * **Frontend:** React 19, Vite, TypeScript, Tailwind CSS, shadcn/ui.
 * **Deployment Ready:** Render (Backend), Vercel / Netlify (Frontend), Neon (Database).
@@ -46,16 +59,18 @@ flowchart TD
 
 ## 🚀 Quickstart Guide
 
-### 1. Backend Setup
-```powershell
+### Option 1: Native Run
+
+#### 1. Backend Setup
+```bash
 cd backend
-$env:JAVA_HOME="C:\Program Files\Java\jdk-21.0.10"
-.\mvnw spring-boot:run
+# On Windows: .\mvnw spring-boot:run
+./mvnw spring-boot:run
 ```
 * Backend starts at `http://localhost:4444` (Swagger UI at `http://localhost:4444/swagger-ui.html`).
 
-### 2. Frontend Setup
-```powershell
+#### 2. Frontend Setup
+```bash
 cd frontend
 npm install
 npm run dev
