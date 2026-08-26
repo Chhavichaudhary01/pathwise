@@ -67,12 +67,14 @@ export default function FloatingAIAssistant() {
           actionCard
         }
       ]);
-    } catch (err) {
+    } catch (err: any) {
+      console.error('Chat error:', err);
+      const errMsg = err.response?.data?.message || (err.response?.status === 401 ? 'Session expired. Please log in again.' : 'Unable to connect to AI Coach. Please make sure the backend is running.');
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: "Focus on consistent daily coding practice and hands-on mini projects to master your current milestone!"
+          content: errMsg
         }
       ]);
     } finally {

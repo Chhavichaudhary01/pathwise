@@ -35,27 +35,62 @@ public class GeminiAiProvider implements AiProvider {
     }
 
     private static final List<String> GEMINI_MODELS = List.of(
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-1.5-flash-latest",
-            "gemini-1.5-pro",
-            "gemini-2.0-flash-lite-preview-02-05"
+            "gemini-2.5-flash",
+            "gemini-flash-latest",
+            "gemini-pro-latest",
+            "gemini-3.1-flash-lite",
+            "gemini-2.5-flash-lite"
     );
 
-    private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/";
+    private static final String BASE_URL = "https://generativelanguage.googleapis.com/v1/models/";
 
-    private boolean isMockOrMissingKey() {
-        return apiKey == null || apiKey.trim().isEmpty() || apiKey.equals("mock-key")
-                || apiKey.startsWith("your_") || apiKey.contains("your_gemini_api_key");
+    public String getEffectiveApiKey() {
+        if (apiKey != null && !apiKey.isBlank() && !isPlaceholder(apiKey)) {
+            return apiKey.trim();
+        }
+        String envKey = System.getenv("GEMINI_API_KEY");
+        if (envKey != null && !envKey.isBlank() && !isPlaceholder(envKey)) {
+            return envKey.trim();
+        }
+        String propKey = System.getProperty("GEMINI_API_KEY");
+        if (propKey != null && !propKey.isBlank() && !isPlaceholder(propKey)) {
+            return propKey.trim();
+        }
+        List<String> paths = List.of("backend/.env", ".env", "../backend/.env");
+        for (String path : paths) {
+            try {
+                java.nio.file.Path p = java.nio.file.Paths.get(path);
+                if (java.nio.file.Files.exists(p)) {
+                    List<String> lines = java.nio.file.Files.readAllLines(p);
+                    for (String line : lines) {
+                        if (line.trim().startsWith("GEMINI_API_KEY=")) {
+                            String val = line.trim().split("=", 2)[1].trim().replace("\"", "").replace("'", "");
+                            if (!val.isBlank() && !isPlaceholder(val)) {
+                                return val;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
+    private boolean isPlaceholder(String key) {
+        if (key == null) return true;
+        String lower = key.toLowerCase().trim();
+        return lower.isEmpty() || lower.equals("mock-key") || lower.startsWith("your_")
+                || lower.contains("your_gemini_api_key");
     }
 
     @Override
     public String generateText(String prompt) {
-        if (!isMockOrMissingKey()) {
+        String activeKey = getEffectiveApiKey();
+        if (activeKey != null) {
             WebClient client = this.webClient != null ? this.webClient : webClientBuilder.build();
             for (String model : GEMINI_MODELS) {
                 try {
-                    String url = BASE_URL + model + ":generateContent?key=" + apiKey.trim();
+                    String url = BASE_URL + model + ":generateContent?key=" + activeKey;
                     Map<String, Object> requestBody = Map.of(
                             "contents", List.of(Map.of("parts", List.of(Map.of("text", prompt)))),
                             "generationConfig", Map.of(
@@ -121,11 +156,12 @@ public class GeminiAiProvider implements AiProvider {
 
     @Override
     public List<Float> getEmbeddings(String text) {
-        if (!isMockOrMissingKey()) {
+        String activeKey = getEffectiveApiKey();
+        if (activeKey != null) {
             try {
-                String url = BASE_URL + "text-embedding-004:embedContent?key=" + apiKey.trim();
+                String url = BASE_URL + "gemini-embedding-001:embedContent?key=" + activeKey;
                 Map<String, Object> requestBody = Map.of(
-                        "model", "models/text-embedding-004",
+                        "model", "models/gemini-embedding-001",
                         "content", Map.of("parts", List.of(Map.of("text", text)))
                 );
 
