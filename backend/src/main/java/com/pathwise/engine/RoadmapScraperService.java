@@ -83,22 +83,80 @@ public class RoadmapScraperService {
     private record GranularSkillMeta(String title, String docUrl, String provider, String roadmapShUrl) {}
 
     /**
-     * Resolves exact high-value documentation / guide URL for a given skill.
+     * Resolves the exact specific roadmap.sh page for a skill or project card.
      */
-    public String resolveGranularResourceUrl(String skillName, String fallbackRoadmapSlug) {
-        if (skillName == null || skillName.isBlank()) {
+    public String resolveSpecificRoadmapShUrl(String titleOrSkill, String fallbackRoadmapSlug) {
+        if (titleOrSkill == null || titleOrSkill.isBlank()) {
             return "https://roadmap.sh";
         }
 
-        String lower = skillName.toLowerCase();
-        for (Map.Entry<String, GranularSkillMeta> entry : GRANULAR_SKILLS.entrySet()) {
-            if (lower.contains(entry.getKey()) || entry.getKey().contains(lower)) {
-                return entry.getValue().docUrl();
+        String lower = titleOrSkill.toLowerCase().trim();
+
+        // 1. Check for Hands-on Project specific pages on roadmap.sh
+        if (lower.contains("project") || lower.contains("starter architecture")) {
+            if (lower.contains("node") || lower.contains("backend") || lower.contains("express")) {
+                return "https://roadmap.sh/projects/backend-api";
+            }
+            if (lower.contains("react") || lower.contains("frontend") || lower.contains("ui")) {
+                return "https://roadmap.sh/projects/single-page-cv";
+            }
+            if (lower.contains("python") || lower.contains("django") || lower.contains("flask")) {
+                return "https://roadmap.sh/projects/url-shortener";
+            }
+            if (lower.contains("full") || lower.contains("stack")) {
+                return "https://roadmap.sh/projects/expense-tracker";
+            }
+            if (lower.contains("javascript") || lower.contains("js")) {
+                return "https://roadmap.sh/projects/todo-list-api";
+            }
+            return "https://roadmap.sh/projects";
+        }
+
+        // 2. Clean title: strip "Mastering ", "Fundamentals of ", etc.
+        String cleanSkill = lower
+                .replace("hands-on project:", "")
+                .replace("hands-on project", "")
+                .replace("mastering", "")
+                .replace("starter architecture", "")
+                .replace("foundations of", "")
+                .replace("core competencies for", "")
+                .trim();
+
+        // 2. Check for specific roadmap.sh guides/topics first
+        if (cleanSkill.contains("rest") || cleanSkill.contains("api")) {
+            return "https://roadmap.sh/guides/rest-api-best-practices";
+        }
+        if (cleanSkill.contains("microservice")) {
+            return "https://roadmap.sh/system-design";
+        }
+        if (cleanSkill.contains("postgresql") || cleanSkill.contains("postgres")) {
+            return "https://roadmap.sh/postgresql";
+        }
+        if (cleanSkill.contains("performance")) {
+            return "https://roadmap.sh/frontend";
+        }
+        if (cleanSkill.contains("test") || cleanSkill.contains("jest") || cleanSkill.contains("playwright")) {
+            return "https://roadmap.sh/qa";
+        }
+
+        // 3. Match from granular index (longest key match first with word-boundary safety)
+        List<Map.Entry<String, GranularSkillMeta>> sortedEntries = new ArrayList<>(GRANULAR_SKILLS.entrySet());
+        sortedEntries.sort((a, b) -> Integer.compare(b.getKey().length(), a.getKey().length()));
+
+        for (Map.Entry<String, GranularSkillMeta> entry : sortedEntries) {
+            String key = entry.getKey();
+            if (key.length() <= 3) {
+                if (cleanSkill.equals(key) || cleanSkill.matches(".*\\b" + java.util.regex.Pattern.quote(key) + "\\b.*")) {
+                    return entry.getValue().roadmapShUrl();
+                }
+            } else {
+                if (cleanSkill.contains(key)) {
+                    return entry.getValue().roadmapShUrl();
+                }
             }
         }
 
-        // Check if slug matches a roadmap.sh topic directly
-        String cleanSlug = skillName.trim().toLowerCase().replaceAll("[^a-z0-9]+", "-");
+        String cleanSlug = cleanSkill.replaceAll("[^a-z0-9]+", "-");
         if (cleanSlug.length() > 2) {
             return "https://roadmap.sh/" + cleanSlug;
         }
@@ -107,7 +165,14 @@ public class RoadmapScraperService {
             return "https://roadmap.sh/" + fallbackRoadmapSlug;
         }
 
-        return "https://developer.mozilla.org/en-US/search?q=" + cleanSlug;
+        return "https://roadmap.sh";
+    }
+
+    /**
+     * Resolves exact high-value documentation / guide URL for a given skill.
+     */
+    public String resolveGranularResourceUrl(String skillName, String fallbackRoadmapSlug) {
+        return resolveSpecificRoadmapShUrl(skillName, fallbackRoadmapSlug);
     }
 
     /**

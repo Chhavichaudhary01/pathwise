@@ -5,6 +5,7 @@ import com.pathwise.domain.*;
 import com.pathwise.dto.RoadmapResponse;
 import com.pathwise.dto.RoadmapResponse.*;
 import com.pathwise.dto.RoadmapTemplateDto;
+import com.pathwise.engine.RoadmapScraperService;
 import com.pathwise.engine.RoadmapTemplateService;
 import com.pathwise.engine.Sequencer;
 import com.pathwise.repository.*;
@@ -35,6 +36,7 @@ public class RoadmapController {
     private final Sequencer sequencer;
     private final AiProvider aiProvider;
     private final RoadmapTemplateService roadmapTemplateService;
+    private final RoadmapScraperService roadmapScraperService;
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -75,7 +77,7 @@ public class RoadmapController {
 
     @PostMapping("/generate")
     @Transactional
-    public ResponseEntity<RoadmapResponse> generateRoadmap() {
+    public ResponseEntity<RoadmapResponse> generateRoadmap(@RequestBody(required = false) Map<String, String> body) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new RuntimeException("User not found: " + userDetails.getId()));
@@ -87,6 +89,11 @@ public class RoadmapController {
                     p.setGoal("Full Stack Development");
                     return profileRepository.save(p);
                 });
+
+        if (body != null && body.containsKey("goal") && body.get("goal") != null && !body.get("goal").isBlank()) {
+            profile.setGoal(body.get("goal").trim());
+            profile = profileRepository.save(profile);
+        }
 
         // 1. Check for Best-Case Match in Curated Catalog (60+ Roadmaps)
         Optional<RoadmapTemplateDto> templateMatch = roadmapTemplateService.findBestMatch(profile.getGoal(), profile.getCurrentSkills());
@@ -313,6 +320,11 @@ public class RoadmapController {
                                 skills.add("Core Competency");
                             }
 
+                            String itemUrl = ci.getUrl();
+                            if (itemUrl == null || itemUrl.equals("https://roadmap.sh") || itemUrl.endsWith("/backend") || itemUrl.endsWith("/frontend") || itemUrl.endsWith("/full-stack") || itemUrl.endsWith("/ai-engineer")) {
+                                itemUrl = roadmapScraperService.resolveSpecificRoadmapShUrl(ci.getTitle(), roadmap.getTitle());
+                            }
+
                             ciDto = CatalogItemDto.builder()
                                     .id(ci.getId())
                                     .title(ci.getTitle())
@@ -321,7 +333,7 @@ public class RoadmapController {
                                     .estimatedHours(ci.getEstimatedHours() != null ? ci.getEstimatedHours().doubleValue() : 5.0)
                                     .provider(ci.getProvider())
                                     .difficulty(ci.getDifficulty())
-                                    .url(ci.getUrl())
+                                    .url(itemUrl)
                                     .skills(skills)
                                     .build();
                         }
