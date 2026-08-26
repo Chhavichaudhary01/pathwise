@@ -35,6 +35,8 @@ public class GeminiAiProvider implements AiProvider {
     }
 
     private static final List<String> GEMINI_MODELS = List.of(
+            "gemini-flash-latest",
+            "gemini-pro-latest",
             "gemini-2.0-flash",
             "gemini-1.5-flash",
             "gemini-1.5-flash-latest",
