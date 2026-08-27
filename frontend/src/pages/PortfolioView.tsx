@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
+import GlowingSkillBadge, { type SkillBadgeData } from '@/components/sandbox/GlowingSkillBadge';
 import api from '@/lib/api';
 
 export default function PortfolioView() {
@@ -11,16 +12,19 @@ export default function PortfolioView() {
   const [copied, setCopied] = useState(false);
   const [roadmaps, setRoadmaps] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
+  const [badges, setBadges] = useState<SkillBadgeData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       api.get('/roadmaps').catch(() => ({ data: [] })),
-      api.get('/profile').catch(() => ({ data: null }))
+      api.get('/profile').catch(() => ({ data: null })),
+      api.get('/sandbox/badges').catch(() => ({ data: [] }))
     ])
-      .then(([roadmapsRes, profileRes]) => {
+      .then(([roadmapsRes, profileRes, badgesRes]) => {
         setRoadmaps(roadmapsRes.data || []);
         setProfile(profileRes.data || null);
+        setBadges(badgesRes.data || []);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -81,7 +85,7 @@ export default function PortfolioView() {
   const masteryPercent = totalItems > 0 ? Math.round((completedCount / totalItems) * 100) : (completedCount > 0 ? 100 : 0);
 
   return (
-    <div className="space-y-6 w-full max-w-5xl mx-auto">
+    <div className="space-y-8 w-full max-w-5xl mx-auto pb-12">
       
       {/* Navigation & Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -99,97 +103,125 @@ export default function PortfolioView() {
         </div>
       </div>
 
-        {/* Portfolio Hero Banner */}
-        <Card className="border-none shadow-sm bg-gradient-to-r from-slate-900 to-blue-950 text-white p-6 md:p-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-500/40 text-green-300 rounded-full text-xs font-bold">
-                <span>✓ Verified Skill Portfolio</span>
-                <span>•</span>
-                <span>Mastery Assessed</span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-white">
-                {user?.email ? user.email.split('@')[0] : 'Learner'}'s Competency Portfolio
-              </h1>
-              <p className="text-slate-300 text-sm max-w-xl">
-                Target Role: <strong className="text-white">{targetRole}</strong>. Demonstrating verifiable competencies backed by assessment-checked milestones, not self-report.
-              </p>
+      {/* Portfolio Hero Banner */}
+      <Card className="border-none shadow-sm bg-gradient-to-r from-slate-900 to-blue-950 text-white p-6 md:p-8 rounded-3xl">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-500/40 text-green-300 rounded-full text-xs font-bold">
+              <span>✓ Verified Skill Portfolio</span>
+              <span>•</span>
+              <span>Mastery Assessed</span>
             </div>
-
-            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/20 text-center min-w-[140px]">
-              <span className="text-xs uppercase font-semibold text-slate-300">Overall Mastery</span>
-              <p className="text-3xl font-black text-white mt-1">{masteryPercent}%</p>
-              <span className="text-[11px] text-green-300 font-medium">Topological Verified</span>
-            </div>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white">
+              {user?.email ? user.email.split('@')[0] : 'Learner'}'s Competency Portfolio
+            </h1>
+            <p className="text-slate-300 text-sm max-w-xl">
+              Target Role: <strong className="text-white">{targetRole}</strong>. Demonstrating verifiable competencies backed by assessment-checked milestones, not self-report.
+            </p>
           </div>
-        </Card>
 
-        {/* Verified Skills Grid */}
-        <Card className="border shadow-sm bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold">Verified Competencies</CardTitle>
-            <CardDescription className="text-xs">
-              Skills validated through completed roadmap milestones & interactive checks on PathWise.
-            </CardDescription>
+          <div className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20 text-center min-w-[140px]">
+            <span className="text-xs uppercase font-semibold text-slate-300">Overall Mastery</span>
+            <p className="text-3xl font-black text-white mt-1">{masteryPercent}%</p>
+            <span className="text-[11px] text-green-300 font-medium">Topological Verified</span>
+          </div>
+        </div>
+      </Card>
+
+      {/* 🏆 Minted Verifiable Badges Section */}
+      {badges && badges.length > 0 && (
+        <Card className="border border-slate-200 shadow-sm bg-slate-900 text-white rounded-3xl overflow-hidden">
+          <CardHeader className="p-6 border-b border-slate-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-black text-white flex items-center gap-2">
+                  <span>🏆 Minted Verifiable Skill Badges</span>
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-400 mt-0.5">
+                  Earned via AI Micro-Sandbox coding challenges and architectural assessments. Backed by SHA-256 cryptographic verification hashes.
+                </CardDescription>
+              </div>
+              <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-950/80 px-3 py-1 rounded-full border border-cyan-500/30">
+                {badges.length} Badges Minted
+              </span>
+            </div>
           </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="py-8 text-center text-slate-500 text-sm">Loading verified competencies...</div>
-            ) : verifiedSkills.size === 0 ? (
-              <div className="py-8 text-center text-slate-500 text-sm">
-                <p>No competencies completed yet.</p>
-                <Button onClick={() => navigate('/onboarding')} size="sm" className="mt-3">Start Roadmap</Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {Array.from(verifiedSkills.values()).slice(0, 8).map((skill, idx) => (
-                  <div key={idx} className="p-3.5 bg-slate-50 border rounded-lg space-y-1">
-                    <span className="text-[10px] text-blue-600 font-bold uppercase">{skill.level}</span>
-                    <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{skill.name}</h4>
-                    <span className={`text-xs font-semibold block ${skill.score.includes('Retained') ? 'text-green-700' : 'text-slate-600'}`}>
-                      {skill.score}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {badges.map((badge, bIdx) => (
+                <GlowingSkillBadge key={badge.id || bIdx} badge={badge} />
+              ))}
+            </div>
           </CardContent>
         </Card>
+      )}
 
-        {/* Completed Projects Showcase */}
-        <Card className="border shadow-sm bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold">Completed Hands-on Milestone Projects</CardTitle>
-            <CardDescription className="text-xs">
-              Practical micro-projects completed during your learning sequence.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {completedProjects.length === 0 ? (
-              <div className="py-8 text-center text-slate-500 text-xs">
-                <p>No completed projects yet.</p>
-                <p className="text-[11px] text-slate-400 mt-1">Mark milestone projects as completed in your roadmap to showcase them here.</p>
-              </div>
-            ) : (
-              completedProjects.map((proj, idx) => (
-                <div key={idx} className="p-4 border rounded-xl bg-slate-50 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-bold text-slate-900 text-base">{proj.title}</h3>
-                    <span className="text-xs bg-slate-200 px-2 py-1 rounded font-medium">{proj.hours}</span>
-                  </div>
-                  <p className="text-sm text-slate-600">{proj.description}</p>
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {proj.tech.map((t: string) => (
-                      <span key={t} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium border border-blue-100">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
+      {/* Verified Skills Grid */}
+      <Card className="border shadow-sm bg-white rounded-3xl">
+        <CardHeader>
+          <CardTitle className="text-lg font-bold">Verified Competencies</CardTitle>
+          <CardDescription className="text-xs">
+            Skills validated through completed roadmap milestones & interactive checks on PathWise.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="py-8 text-center text-slate-500 text-sm">Loading verified competencies...</div>
+          ) : verifiedSkills.size === 0 ? (
+            <div className="py-8 text-center text-slate-500 text-sm">
+              <p>No competencies completed yet.</p>
+              <Button onClick={() => navigate('/onboarding')} size="sm" className="mt-3">Start Roadmap</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {Array.from(verifiedSkills.values()).slice(0, 8).map((skill, idx) => (
+                <div key={idx} className="p-3.5 bg-slate-50 border rounded-2xl space-y-1">
+                  <span className="text-[10px] text-blue-600 font-bold uppercase">{skill.level}</span>
+                  <h4 className="font-bold text-sm text-slate-900 line-clamp-1">{skill.name}</h4>
+                  <span className={`text-xs font-semibold block ${skill.score.includes('Retained') ? 'text-green-700' : 'text-slate-600'}`}>
+                    {skill.score}
+                  </span>
                 </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Completed Projects Showcase */}
+      <Card className="border shadow-sm bg-white rounded-3xl">
+        <CardHeader>
+          <CardTitle className="text-lg font-bold">Completed Hands-on Milestone Projects</CardTitle>
+          <CardDescription className="text-xs">
+            Practical micro-projects completed during your learning sequence.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {completedProjects.length === 0 ? (
+            <div className="py-8 text-center text-slate-500 text-xs">
+              <p>No completed projects yet.</p>
+              <p className="text-[11px] text-slate-400 mt-1">Mark milestone projects as completed in your roadmap to showcase them here.</p>
+            </div>
+          ) : (
+            completedProjects.map((proj, idx) => (
+              <div key={idx} className="p-4 border rounded-2xl bg-slate-50 space-y-2">
+                <div className="flex justify-between items-start">
+                  <h3 className="font-bold text-slate-900 text-base">{proj.title}</h3>
+                  <span className="text-xs bg-slate-200 px-2 py-1 rounded-full font-medium">{proj.hours}</span>
+                </div>
+                <p className="text-sm text-slate-600">{proj.description}</p>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {proj.tech.map((t: string) => (
+                    <span key={t} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-medium border border-blue-100">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   X, Clock, TrendingUp, Star, 
-  ExternalLink, Sparkles, ArrowRight, ShieldCheck, BookOpen, Layers
+  ExternalLink, Sparkles, ArrowRight, ShieldCheck, BookOpen, Layers, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { SkillNodeData } from './SkillNode';
@@ -11,13 +11,15 @@ interface SkillDetailDrawerProps {
   onClose: () => void;
   onStatusChange: (nodeId: string, currentStatus: string, newStatus: string) => void;
   onAskAi?: (topic: string) => void;
+  onTestOut?: (skill: SkillNodeData) => void;
 }
 
 export const SkillDetailDrawer: React.FC<SkillDetailDrawerProps> = ({
   skill,
   onClose,
   onStatusChange,
-  onAskAi
+  onAskAi,
+  onTestOut
 }) => {
   if (!skill) return null;
 
@@ -75,6 +77,18 @@ export const SkillDetailDrawer: React.FC<SkillDetailDrawerProps> = ({
               {isCompleted ? '✓ Mastered' : isInProgress ? '⚡ In Progress' : '🔒 Locked / Up Next'}
             </span>
           </div>
+
+          {/* Test Out in Sandbox CTA */}
+          {onTestOut && !isCompleted && (
+            <Button
+              size="sm"
+              onClick={() => onTestOut(skill)}
+              className="w-full bg-gradient-to-r from-[#4F46E5] to-[#6366F1] hover:from-indigo-600 hover:to-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer flex items-center justify-center gap-1.5 py-2.5"
+            >
+              <Zap className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
+              <span>⚡ Test Out & Verify in Micro-Sandbox</span>
+            </Button>
+          )}
 
           <div className="flex gap-2">
             <Button

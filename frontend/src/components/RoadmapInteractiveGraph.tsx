@@ -46,6 +46,7 @@ interface RoadmapInteractiveGraphProps {
   }>;
   onItemStatusChange?: (itemId: string, currentStatus: string, newStatus: string) => void;
   onAskAi?: (topic: string) => void;
+  onTestOut?: (skill: SkillNodeData) => void;
 }
 
 const nodeTypes = {
@@ -56,7 +57,8 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
   roadmapTitle = 'Career Prerequisite DAG',
   milestones = [],
   onItemStatusChange,
-  onAskAi
+  onAskAi,
+  onTestOut
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -416,6 +418,7 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
             }
           }}
           onAskAi={onAskAi}
+          onTestOut={onTestOut}
         />
       </div>
 

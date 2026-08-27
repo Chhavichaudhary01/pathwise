@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CheckCircle2, Circle, Clock, ExternalLink, MessageSquare, Sparkles, BookOpen } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, ExternalLink, MessageSquare, Sparkles, BookOpen, Zap } from 'lucide-react';
 import api from '@/lib/api';
 import RoadmapInteractiveGraph from '@/components/RoadmapInteractiveGraph';
+import ProofOfSkillModal from '@/components/sandbox/ProofOfSkillModal';
 
 interface CatalogItem {
   id: string;
@@ -69,6 +70,19 @@ export default function RoadmapView() {
 
   // Inline Feedback State
   const [feedbackModalItem, setFeedbackModalItem] = useState<string | null>(null);
+
+  // Proof of Skill Sandbox State
+  const [sandboxModalOpen, setSandboxModalOpen] = useState(false);
+  const [sandboxSkill, setSandboxSkill] = useState<string>('JavaScript');
+  const [sandboxTopic, setSandboxTopic] = useState<string>('Engineering Competency');
+  const [sandboxItemId, setSandboxItemId] = useState<string | undefined>(undefined);
+
+  const openProofOfSkill = (skill: string, topic?: string, itemId?: string) => {
+    setSandboxSkill(skill);
+    setSandboxTopic(topic || skill);
+    setSandboxItemId(itemId);
+    setSandboxModalOpen(true);
+  };
 
   useEffect(() => {
     fetchRoadmap();
@@ -408,8 +422,19 @@ export default function RoadmapView() {
                             </div>
                           </div>
 
-                          {/* Status Action Button */}
+                          {/* Status Action Button & Test Out Button */}
                           <div className="flex items-center gap-2 self-start sm:self-auto">
+                            {!isCompleted && (
+                              <button
+                                type="button"
+                                onClick={() => openProofOfSkill(ci.skills?.[0] || ci.title, ci.title, item.id)}
+                                className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-indigo-50 text-[#5051F9] border border-indigo-200 hover:bg-indigo-100 transition-all cursor-pointer shadow-2xs flex items-center gap-1"
+                              >
+                                <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                <span>Test Out</span>
+                              </button>
+                            )}
+
                             <button
                               type="button"
                               onClick={() => toggleItemStatus(item.id, item.status, isCompleted ? 'NOT_STARTED' : isInProgress ? 'COMPLETED' : 'IN_PROGRESS')}
@@ -522,10 +547,32 @@ export default function RoadmapView() {
             milestones={roadmap?.milestones}
             onItemStatusChange={toggleItemStatus}
             onAskAi={(topic) => navigate('/chat', { state: { initialMessage: `Can you give me a comprehensive breakdown and key concepts for ${topic}?` } })}
+            onTestOut={(skillNode) => openProofOfSkill(skillNode.title, skillNode.title, skillNode.id)}
           />
         </div>
 
       </div>
+
+      {/* Proof-of-Skill AI Micro-Sandbox Modal */}
+      <ProofOfSkillModal
+        isOpen={sandboxModalOpen}
+        onClose={() => setSandboxModalOpen(false)}
+        skillName={sandboxSkill}
+        topicTitle={sandboxTopic}
+        roadmapItemId={sandboxItemId}
+        onSuccess={() => {
+          if (sandboxItemId && roadmap) {
+            const updated = {
+              ...roadmap,
+              milestones: roadmap.milestones.map((m) => ({
+                ...m,
+                items: m.items.map((it) => it.id === sandboxItemId ? { ...it, status: 'COMPLETED' } : it)
+              }))
+            };
+            setRoadmap(updated);
+          }
+        }}
+      />
 
       {/* Mastery Quiz Interactive Modal */}
       {quizModalOpen && (
