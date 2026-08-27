@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import GlowingSkillBadge from '@/components/sandbox/GlowingSkillBadge';
 
 export default function PublicVerification() {
   const { uuid } = useParams();
@@ -86,6 +87,20 @@ export default function PublicVerification() {
             </div>
           </div>
 
+          {/* Glowing Badge Preview */}
+          <div className="max-w-xs mx-auto pt-2">
+            <GlowingSkillBadge
+              badge={{
+                skillName: "Full-Stack Web Engineering",
+                topicTitle: "Topological Prerequisite DAG & React State",
+                score: 95,
+                verificationHash: uuid ? `0x${uuid}` : "0x8f4e2b19c8d76a01...verified",
+                badgeTier: "DIAMOND",
+                issuedAt: new Date().toISOString()
+              }}
+            />
+          </div>
+
           {/* Footer Signature */}
           <div className="flex justify-between items-center pt-4 border-t text-xs text-slate-500">
             <div className="flex items-center gap-2">
@@ -93,7 +108,7 @@ export default function PublicVerification() {
               <span>•</span>
               <span>Tamper-evident hash</span>
             </div>
-            <span className="font-mono text-[10px]">SHA-256: 8f4e...c21a</span>
+            <span className="font-mono text-[10px]">SHA-256: {uuid ? uuid.slice(0, 16) : '8f4e...c21a'}</span>
           </div>
 
         </div>

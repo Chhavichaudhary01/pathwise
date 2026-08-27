@@ -20,8 +20,8 @@ public class JwtUtils {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration-ms}")
-    private int jwtExpirationMs;
+    @Value("${jwt.expiration-ms:2592000000}")
+    private long jwtExpirationMs;
 
     public String generateJwtToken(Authentication authentication) {
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
@@ -29,10 +29,11 @@ public class JwtUtils {
     }
 
     public String generateTokenFromUsername(String email) {
+        long now = System.currentTimeMillis();
         return Jwts.builder()
                 .subject(email)
-                .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + jwtExpirationMs))
                 .signWith(key())
                 .compact();
     }

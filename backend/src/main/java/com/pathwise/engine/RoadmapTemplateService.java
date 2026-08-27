@@ -24,13 +24,18 @@ public class RoadmapTemplateService {
 
     private final ObjectMapper objectMapper;
     private final CatalogItemRepository catalogItemRepository;
+    private final RoadmapScraperService roadmapScraperService;
 
     private List<RoadmapTemplateDto> templateCatalog = new ArrayList<>();
     private final Map<String, RoadmapTemplateDto> slugIndex = new HashMap<>();
 
-    public RoadmapTemplateService(ObjectMapper objectMapper, CatalogItemRepository catalogItemRepository) {
+    public RoadmapTemplateService(
+            ObjectMapper objectMapper, 
+            CatalogItemRepository catalogItemRepository,
+            RoadmapScraperService roadmapScraperService) {
         this.objectMapper = objectMapper;
         this.catalogItemRepository = catalogItemRepository;
+        this.roadmapScraperService = roadmapScraperService;
     }
 
     @PostConstruct
@@ -228,7 +233,8 @@ public class RoadmapTemplateService {
         item.setEstimatedHours(BigDecimal.valueOf(isFirstProject ? 6.0 : (phaseIdx == 1 ? 8.0 : 12.0)));
         item.setProvider(template.getSource() != null ? "PathWise (" + template.getSource() + ")" : "PathWise Academy");
         item.setDifficulty(difficulty);
-        item.setUrl(template.getUrl() != null ? template.getUrl() : "https://roadmap.sh");
+        String granularUrl = roadmapScraperService.resolveGranularResourceUrl(skill, template.getSlug());
+        item.setUrl(granularUrl);
 
         return catalogItemRepository.save(item);
     }

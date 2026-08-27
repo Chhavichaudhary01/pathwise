@@ -187,7 +187,7 @@ export default function Dashboard() {
             <p className="text-slate-100 font-medium">{nextRecommendedAction}</p>
           </div>
 
-          <div className="pt-1 flex items-center gap-3">
+          <div className="pt-1 flex flex-wrap items-center gap-2.5">
             {roadmaps.length > 0 && (
               <button
                 onClick={() => navigate(`/roadmap/${roadmaps[0].id}`)}
@@ -197,6 +197,18 @@ export default function Dashboard() {
                 <ArrowRight className="w-3.5 h-3.5 text-white" />
               </button>
             )}
+            <button
+              onClick={() => navigate('/planner')}
+              className="bg-purple-950/80 hover:bg-purple-900 text-purple-200 border border-purple-400/40 font-extrabold text-xs px-4 py-2.5 rounded-full shadow-md transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <span>📅 Career Planner & Calendar</span>
+            </button>
+            <button
+              onClick={() => navigate('/resume-analyzer')}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-full shadow-md transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <span>📄 AI Resume Bridge</span>
+            </button>
             <button
               onClick={() => navigate('/chat')}
               className="bg-white/15 hover:bg-white/25 text-white font-bold text-xs px-4 py-2.5 rounded-full backdrop-blur-xs transition-colors cursor-pointer"

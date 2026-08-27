@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 public class ProfileRequest {
     private String goal;
+    private String avatarUrl;
     private Integer age;
     private String classGrade;
     private String board;

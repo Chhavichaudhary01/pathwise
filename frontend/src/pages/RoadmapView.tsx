@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CheckCircle2, Circle, Clock, ExternalLink, MessageSquare, Sparkles, BookOpen } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, ExternalLink, MessageSquare, Sparkles, BookOpen, Zap } from 'lucide-react';
 import api from '@/lib/api';
-import RoadmapMermaidGraph from '@/components/RoadmapMermaidGraph';
+import RoadmapInteractiveGraph from '@/components/RoadmapInteractiveGraph';
+import ProofOfSkillModal from '@/components/sandbox/ProofOfSkillModal';
 
 interface CatalogItem {
   id: string;
@@ -69,6 +70,19 @@ export default function RoadmapView() {
 
   // Inline Feedback State
   const [feedbackModalItem, setFeedbackModalItem] = useState<string | null>(null);
+
+  // Proof of Skill Sandbox State
+  const [sandboxModalOpen, setSandboxModalOpen] = useState(false);
+  const [sandboxSkill, setSandboxSkill] = useState<string>('JavaScript');
+  const [sandboxTopic, setSandboxTopic] = useState<string>('Engineering Competency');
+  const [sandboxItemId, setSandboxItemId] = useState<string | undefined>(undefined);
+
+  const openProofOfSkill = (skill: string, topic?: string, itemId?: string) => {
+    setSandboxSkill(skill);
+    setSandboxTopic(topic || skill);
+    setSandboxItemId(itemId);
+    setSandboxModalOpen(true);
+  };
 
   useEffect(() => {
     fetchRoadmap();
@@ -175,18 +189,90 @@ export default function RoadmapView() {
     }
   };
 
-  if (loading) {
+  const [generating, setGenerating] = useState(false);
+
+  const handleQuickGenerate = async (goal: string) => {
+    try {
+      setGenerating(true);
+      const res = await api.post('/roadmaps/generate', { goal });
+      setRoadmap(res.data);
+    } catch (err) {
+      console.error('Failed to generate roadmap:', err);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  if (loading || generating) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center p-8">
+      <div className="min-h-[450px] flex items-center justify-center p-8">
         <div className="text-center space-y-4">
-          <div className="w-10 h-10 border-3 border-[#5051F9] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-xs font-semibold text-slate-500">Loading personalized roadmap & visual DAG...</p>
+          <div className="w-12 h-12 border-4 border-[#5051F9] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-sm font-bold text-slate-700">
+            {generating ? '✨ Synthesizing 3-Phase Topological Skill Tree with AI...' : 'Loading personalized roadmap & visual DAG...'}
+          </p>
+          <p className="text-xs text-slate-400">Verifying prerequisites, dedicated roadmap.sh guides, and project milestones...</p>
         </div>
       </div>
     );
   }
 
-  const allItems = roadmap?.milestones?.flatMap((m) => m.items) || [];
+  if (!roadmap || !roadmap.milestones || roadmap.milestones.length === 0) {
+    return (
+      <div className="w-full max-w-4xl mx-auto py-12 px-4 space-y-8 animate-in fade-in">
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-3xl mx-auto shadow-sm">
+            🗺️
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            No Active Roadmap Found
+          </h2>
+          <p className="text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
+            You haven't initialized your personalized skill graph yet. Choose a career track below or take the adaptive onboarding quiz to generate your custom path!
+          </p>
+        </div>
+
+        {/* Quick Track Starter Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          {[
+            { goal: 'Frontend Developer', icon: '💻', desc: 'React, TypeScript, Tailwind, Next.js & Web Architecture' },
+            { goal: 'Full Stack Developer', icon: '⚡', desc: 'Node.js, PostgreSQL, REST APIs, React & Cloud Deploy' },
+            { goal: 'Backend Developer', icon: '🛠️', desc: 'Spring Boot, Microservices, SQL, Docker & System Design' },
+            { goal: 'AI Engineer', icon: '🤖', desc: 'Python, LLMs, Embeddings, LangChain, Vectors & RAG' },
+          ].map((track) => (
+            <button
+              key={track.goal}
+              onClick={() => handleQuickGenerate(track.goal)}
+              className="p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-[#5051F9] hover:shadow-lg transition-all text-left flex items-start gap-4 group cursor-pointer"
+            >
+              <span className="text-2xl p-2.5 rounded-xl bg-slate-50 group-hover:bg-indigo-50 border border-slate-100 transition-colors">
+                {track.icon}
+              </span>
+              <div className="space-y-1">
+                <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-[#5051F9] transition-colors">
+                  {track.goal}
+                </h4>
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  {track.desc}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center pt-2">
+          <Button
+            onClick={() => navigate('/onboarding')}
+            className="bg-[#5051F9] hover:bg-indigo-700 text-white font-extrabold rounded-full px-6 py-2 text-xs shadow-md"
+          >
+            ✨ Or Take the Personalized Assessment &rarr;
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const allItems = roadmap.milestones.flatMap((m) => m.items) || [];
   const completedCount = allItems.filter((i) => i.status === 'COMPLETED').length;
   const progressPercent = allItems.length > 0 ? Math.round((completedCount / allItems.length) * 100) : 0;
   const totalHours = allItems.reduce((acc, curr) => acc + (curr.catalogItem?.estimatedHours || 5), 0);
@@ -336,8 +422,19 @@ export default function RoadmapView() {
                             </div>
                           </div>
 
-                          {/* Status Action Button */}
+                          {/* Status Action Button & Test Out Button */}
                           <div className="flex items-center gap-2 self-start sm:self-auto">
+                            {!isCompleted && (
+                              <button
+                                type="button"
+                                onClick={() => openProofOfSkill(ci.skills?.[0] || ci.title, ci.title, item.id)}
+                                className="px-3 py-1.5 rounded-full text-[11px] font-extrabold bg-indigo-50 text-[#5051F9] border border-indigo-200 hover:bg-indigo-100 transition-all cursor-pointer shadow-2xs flex items-center gap-1"
+                              >
+                                <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                <span>Test Out</span>
+                              </button>
+                            )}
+
                             <button
                               type="button"
                               onClick={() => toggleItemStatus(item.id, item.status, isCompleted ? 'NOT_STARTED' : isInProgress ? 'COMPLETED' : 'IN_PROGRESS')}
@@ -443,15 +540,39 @@ export default function RoadmapView() {
           ))}
         </div>
 
-        {/* Right: Visual Mermaid DAG Graph (5 cols, sticky) */}
+        {/* Right: Interactive React Flow DAG Graph (5 cols, sticky) */}
         <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-6">
-          <RoadmapMermaidGraph 
+          <RoadmapInteractiveGraph 
             roadmapTitle={roadmap?.title}
             milestones={roadmap?.milestones}
+            onItemStatusChange={toggleItemStatus}
+            onAskAi={(topic) => navigate('/chat', { state: { initialMessage: `Can you give me a comprehensive breakdown and key concepts for ${topic}?` } })}
+            onTestOut={(skillNode) => openProofOfSkill(skillNode.title, skillNode.title, skillNode.id)}
           />
         </div>
 
       </div>
+
+      {/* Proof-of-Skill AI Micro-Sandbox Modal */}
+      <ProofOfSkillModal
+        isOpen={sandboxModalOpen}
+        onClose={() => setSandboxModalOpen(false)}
+        skillName={sandboxSkill}
+        topicTitle={sandboxTopic}
+        roadmapItemId={sandboxItemId}
+        onSuccess={() => {
+          if (sandboxItemId && roadmap) {
+            const updated = {
+              ...roadmap,
+              milestones: roadmap.milestones.map((m) => ({
+                ...m,
+                items: m.items.map((it) => it.id === sandboxItemId ? { ...it, status: 'COMPLETED' } : it)
+              }))
+            };
+            setRoadmap(updated);
+          }
+        }}
+      />
 
       {/* Mastery Quiz Interactive Modal */}
       {quizModalOpen && (

@@ -53,6 +53,9 @@ public class ProfileController {
         if (newProfile.getGoal() != null && !newProfile.getGoal().isBlank()) {
             profile.setGoal(newProfile.getGoal());
         }
+        if (newProfile.getAvatarUrl() != null) {
+            profile.setAvatarUrl(newProfile.getAvatarUrl());
+        }
         if (newProfile.getCurrentSkills() != null) {
             profile.setCurrentSkills(newProfile.getCurrentSkillsJson(objectMapper));
         } else if (profile.getCurrentSkills() == null) {

@@ -13,6 +13,10 @@ import PortfolioView from './pages/PortfolioView';
 import ChatView from './pages/ChatView';
 import SettingsView from './pages/SettingsView';
 import PublicVerification from './pages/PublicVerification';
+import ResourceFinder from './pages/ResourceFinder';
+import ResumeAnalyzerView from './pages/ResumeAnalyzerView';
+import CareerPlannerView from './pages/CareerPlannerView';
+import PublicPortfolioView from './pages/PublicPortfolioView';
 import FloatingAIAssistant from './components/FloatingAIAssistant';
 import AppLayout from './components/AppLayout';
 
@@ -34,6 +38,9 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/verify/:uuid" element={<PublicVerification />} />
         <Route path="/verify" element={<PublicVerification />} />
+        <Route path="/@:username" element={<PublicPortfolioView />} />
+        <Route path="/p/:username" element={<PublicPortfolioView />} />
+        <Route path="/portfolio/:username" element={<PublicPortfolioView />} />
 
         {/* Authenticated Protected Routes with Persistent AppLayout */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
@@ -44,6 +51,11 @@ function App() {
           <Route path="/lms" element={<DashboardCoursue />} />
           <Route path="/roadmap" element={<RoadmapView />} />
           <Route path="/roadmap/:id" element={<RoadmapView />} />
+          <Route path="/planner" element={<CareerPlannerView />} />
+          <Route path="/schedule" element={<CareerPlannerView />} />
+          <Route path="/resume-analyzer" element={<ResumeAnalyzerView />} />
+          <Route path="/resume" element={<ResumeAnalyzerView />} />
+          <Route path="/resources" element={<ResourceFinder />} />
           <Route path="/skill-graph" element={<SkillGraphView />} />
           <Route path="/portfolio" element={<PortfolioView />} />
           <Route path="/chat" element={<ChatView />} />

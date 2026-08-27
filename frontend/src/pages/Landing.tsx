@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
+import ThemeToggle from '@/components/ThemeToggle';
 import api from '@/lib/api';
 
 interface LandingData {
@@ -57,25 +58,29 @@ export default function Landing() {
       <div className="max-w-4xl w-full text-center space-y-8">
         
         {/* Top User Bar */}
-        <div className="flex justify-between items-center bg-white border px-5 py-2.5 rounded-full shadow-sm max-w-lg mx-auto text-xs">
+        <div className="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-5 py-2 rounded-full shadow-sm max-w-lg mx-auto text-xs">
           {isAuthenticated && user ? (
             <>
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="font-semibold text-slate-700">Signed in as {user.email}</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-300">Signed in as {user.email}</span>
               </div>
-              <button onClick={logout} className="text-slate-500 hover:text-red-600 font-bold">
-                Log Out
-              </button>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <button onClick={logout} className="text-slate-500 hover:text-red-600 font-bold cursor-pointer">
+                  Log Out
+                </button>
+              </div>
             </>
           ) : (
             <>
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                <span className="font-semibold text-slate-700">PathWise AI Platform</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-300">PathWise AI Platform</span>
               </div>
-              <div className="flex items-center gap-3">
-                <Link to="/login" className="text-blue-600 hover:underline font-bold">
+              <div className="flex items-center gap-2.5">
+                <ThemeToggle />
+                <Link to="/login" className="text-blue-600 dark:text-indigo-400 hover:underline font-bold">
                   Sign In
                 </Link>
                 <Link to="/register" className="bg-blue-600 text-white px-3 py-1 rounded-full font-bold hover:bg-blue-700">
