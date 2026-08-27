@@ -175,18 +175,90 @@ export default function RoadmapView() {
     }
   };
 
-  if (loading) {
+  const [generating, setGenerating] = useState(false);
+
+  const handleQuickGenerate = async (goal: string) => {
+    try {
+      setGenerating(true);
+      const res = await api.post('/roadmaps/generate', { goal });
+      setRoadmap(res.data);
+    } catch (err) {
+      console.error('Failed to generate roadmap:', err);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  if (loading || generating) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center p-8">
+      <div className="min-h-[450px] flex items-center justify-center p-8">
         <div className="text-center space-y-4">
-          <div className="w-10 h-10 border-3 border-[#5051F9] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-xs font-semibold text-slate-500">Loading personalized roadmap & visual DAG...</p>
+          <div className="w-12 h-12 border-4 border-[#5051F9] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-sm font-bold text-slate-700">
+            {generating ? '✨ Synthesizing 3-Phase Topological Skill Tree with AI...' : 'Loading personalized roadmap & visual DAG...'}
+          </p>
+          <p className="text-xs text-slate-400">Verifying prerequisites, dedicated roadmap.sh guides, and project milestones...</p>
         </div>
       </div>
     );
   }
 
-  const allItems = roadmap?.milestones?.flatMap((m) => m.items) || [];
+  if (!roadmap || !roadmap.milestones || roadmap.milestones.length === 0) {
+    return (
+      <div className="w-full max-w-4xl mx-auto py-12 px-4 space-y-8 animate-in fade-in">
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-3xl mx-auto shadow-sm">
+            🗺️
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            No Active Roadmap Found
+          </h2>
+          <p className="text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
+            You haven't initialized your personalized skill graph yet. Choose a career track below or take the adaptive onboarding quiz to generate your custom path!
+          </p>
+        </div>
+
+        {/* Quick Track Starter Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+          {[
+            { goal: 'Frontend Developer', icon: '💻', desc: 'React, TypeScript, Tailwind, Next.js & Web Architecture' },
+            { goal: 'Full Stack Developer', icon: '⚡', desc: 'Node.js, PostgreSQL, REST APIs, React & Cloud Deploy' },
+            { goal: 'Backend Developer', icon: '🛠️', desc: 'Spring Boot, Microservices, SQL, Docker & System Design' },
+            { goal: 'AI Engineer', icon: '🤖', desc: 'Python, LLMs, Embeddings, LangChain, Vectors & RAG' },
+          ].map((track) => (
+            <button
+              key={track.goal}
+              onClick={() => handleQuickGenerate(track.goal)}
+              className="p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-[#5051F9] hover:shadow-lg transition-all text-left flex items-start gap-4 group cursor-pointer"
+            >
+              <span className="text-2xl p-2.5 rounded-xl bg-slate-50 group-hover:bg-indigo-50 border border-slate-100 transition-colors">
+                {track.icon}
+              </span>
+              <div className="space-y-1">
+                <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-[#5051F9] transition-colors">
+                  {track.goal}
+                </h4>
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  {track.desc}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center pt-2">
+          <Button
+            onClick={() => navigate('/onboarding')}
+            className="bg-[#5051F9] hover:bg-indigo-700 text-white font-extrabold rounded-full px-6 py-2 text-xs shadow-md"
+          >
+            ✨ Or Take the Personalized Assessment &rarr;
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const allItems = roadmap.milestones.flatMap((m) => m.items) || [];
   const completedCount = allItems.filter((i) => i.status === 'COMPLETED').length;
   const progressPercent = allItems.length > 0 ? Math.round((completedCount / allItems.length) * 100) : 0;
   const totalHours = allItems.reduce((acc, curr) => acc + (curr.catalogItem?.estimatedHours || 5), 0);
