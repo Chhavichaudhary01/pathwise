@@ -81,6 +81,53 @@ public class AuthController {
         return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), user.getId(), user.getEmail(), true));
     }
 
+    @PostMapping("/firebase")
+    public ResponseEntity<?> authenticateFirebase(@RequestBody com.pathwise.dto.FirebaseAuthRequest request) {
+        String email = request.getEmail() != null ? request.getEmail().trim().toLowerCase() : "";
+        if (email.isBlank()) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Valid email is required for Firebase authentication"));
+        }
+
+        // Find or provision user in Neon DB
+        User user = userRepository.findByEmail(email).orElseGet(() -> {
+            User newUser = User.builder()
+                    .email(email)
+                    .password(encoder.encode(java.util.UUID.randomUUID().toString()))
+                    .build();
+            return userRepository.save(newUser);
+        });
+
+        // Initialize or update learner profile
+        com.pathwise.domain.LearnerProfile profile = learnerProfileRepository.findByUserId(user.getId())
+                .orElseGet(() -> {
+                    com.pathwise.domain.LearnerProfile newProf = com.pathwise.domain.LearnerProfile.builder()
+                            .user(user)
+                            .goal("Full Stack Web Developer")
+                            .weeklyHours(10)
+                            .learningStyle("hands-on")
+                            .currentSkills("[]")
+                            .interests("[]")
+                            .learningHistory("[]")
+                            .isProfileComplete(false)
+                            .build();
+                    return learnerProfileRepository.save(newProf);
+                });
+
+        // Sync Google photo if profile avatar is not yet set
+        if (request.getPhotoUrl() != null && !request.getPhotoUrl().isBlank()) {
+            if (profile.getAvatarUrl() == null || profile.getAvatarUrl().isBlank()) {
+                profile.setAvatarUrl(request.getPhotoUrl());
+                learnerProfileRepository.save(profile);
+            }
+        }
+
+        String jwt = jwtUtils.generateTokenFromUsername(user.getEmail());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+        boolean isComplete = Boolean.TRUE.equals(profile.getIsProfileComplete());
+
+        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(), user.getId(), user.getEmail(), isComplete));
+    }
+
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         String email = signUpRequest.getEmail() != null ? signUpRequest.getEmail().trim().toLowerCase() : "";
