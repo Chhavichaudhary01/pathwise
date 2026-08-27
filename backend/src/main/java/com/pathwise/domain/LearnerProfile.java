@@ -55,6 +55,24 @@ public class LearnerProfile {
     @Column(name = "learning_style")
     private String learningStyle;
 
+    @Column(name = "streak_count")
+    private Integer streakCount;
+
+    @Column(name = "longest_streak")
+    private Integer longestStreak;
+
+    @Column(name = "last_active_date")
+    private java.time.LocalDate lastActiveDate;
+
+    @Column(name = "daily_reminder_enabled")
+    private Boolean dailyReminderEnabled;
+
+    @Column(name = "daily_reminder_time")
+    private String dailyReminderTime;
+
+    @Column(name = "notification_email")
+    private String notificationEmail;
+
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
@@ -67,6 +85,21 @@ public class LearnerProfile {
         updatedAt = OffsetDateTime.now();
         if (isProfileComplete == null) {
             isProfileComplete = false;
+        }
+        if (streakCount == null) {
+            streakCount = 1;
+        }
+        if (longestStreak == null) {
+            longestStreak = 1;
+        }
+        if (lastActiveDate == null) {
+            lastActiveDate = java.time.LocalDate.now();
+        }
+        if (dailyReminderEnabled == null) {
+            dailyReminderEnabled = true;
+        }
+        if (dailyReminderTime == null) {
+            dailyReminderTime = "09:00";
         }
     }
 

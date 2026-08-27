@@ -130,17 +130,28 @@ export default function Dashboard() {
 
         {/* Quick Stats Strip */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xs text-xs font-bold text-slate-700">
+          
+          {/* Daily Streak Flame Pill */}
+          <div 
+            onClick={() => navigate('/settings')}
+            className="bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xs text-xs font-extrabold text-amber-800 dark:text-amber-300 cursor-pointer hover:scale-105 transition-transform"
+            title="Daily Active Streak (Click to manage daily email reminders)"
+          >
+            <Flame className="w-4 h-4 text-orange-500 fill-orange-500 animate-pulse" />
+            <span><strong>{profile?.streakCount || 1}</strong>-Day Streak</span>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xs text-xs font-bold text-slate-700 dark:text-slate-300">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
             <span><strong>{weeklyHours}h</strong>/wk Pace</span>
           </div>
 
-          <div className="bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xs text-xs font-bold text-slate-700">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xs text-xs font-bold text-slate-700 dark:text-slate-300">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
             <span><strong>{completedItems}</strong> Done</span>
           </div>
 
-          <div className="bg-white border border-slate-200/80 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xs text-xs font-bold text-slate-700">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-full px-3.5 py-1.5 flex items-center gap-2 shadow-2xs text-xs font-bold text-slate-700 dark:text-slate-300">
             <Hourglass className="w-3.5 h-3.5 text-amber-500" />
             <span><strong>{inProgressItems}</strong> In Progress</span>
           </div>

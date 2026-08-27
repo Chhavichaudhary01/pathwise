@@ -17,6 +17,11 @@ public class ProfileRequest {
     private Object learningHistory;
     private Integer weeklyHours;
     private String learningStyle;
+    private Integer streakCount;
+    private Integer longestStreak;
+    private Boolean dailyReminderEnabled;
+    private String dailyReminderTime;
+    private String notificationEmail;
 
     public String getCurrentSkillsJson(ObjectMapper mapper) {
         return toJsonString(currentSkills, mapper);

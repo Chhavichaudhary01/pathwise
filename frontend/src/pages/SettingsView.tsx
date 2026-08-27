@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { User, GraduationCap, MapPin, Sparkles, CheckCircle2, Bookmark, Download, Trash2, ArrowLeft } from 'lucide-react';
+import { User, GraduationCap, MapPin, Sparkles, CheckCircle2, Bookmark, Download, Trash2, ArrowLeft, Mail, Bell, Flame, Clock, Send } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 
@@ -38,6 +38,15 @@ export default function SettingsView() {
   const [exportLoading, setExportLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
+  // Daily Email Reminders & Streak State
+  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(true);
+  const [dailyReminderTime, setDailyReminderTime] = useState('09:00');
+  const [notificationEmail, setNotificationEmail] = useState('');
+  const [streakCount, setStreakCount] = useState(1);
+  const [longestStreak, setLongestStreak] = useState(1);
+  const [testEmailLoading, setTestEmailLoading] = useState(false);
+  const [testEmailStatus, setTestEmailStatus] = useState<string | null>(null);
+
   useEffect(() => {
     api.get('/profile')
       .then((res) => {
@@ -50,6 +59,11 @@ export default function SettingsView() {
           if (d.goal) setGoal(d.goal);
           if (d.weeklyHours) setWeeklyHours(d.weeklyHours);
           if (d.learningStyle) setLearningStyle(d.learningStyle);
+          if (d.dailyReminderEnabled !== undefined) setDailyReminderEnabled(d.dailyReminderEnabled);
+          if (d.dailyReminderTime) setDailyReminderTime(d.dailyReminderTime);
+          if (d.notificationEmail) setNotificationEmail(d.notificationEmail);
+          if (d.streakCount) setStreakCount(d.streakCount);
+          if (d.longestStreak) setLongestStreak(d.longestStreak);
 
           if (d.interests) {
             try {
@@ -83,6 +97,9 @@ export default function SettingsView() {
         interests: selectedInterests,
         weeklyHours,
         learningStyle,
+        dailyReminderEnabled,
+        dailyReminderTime,
+        notificationEmail,
         isProfileComplete: true
       });
       setSaved(true);
@@ -91,6 +108,22 @@ export default function SettingsView() {
       console.error('Failed to update profile:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    setTestEmailLoading(true);
+    setTestEmailStatus(null);
+    try {
+      const res = await api.post('/notifications/test-reminder');
+      setTestEmailStatus(res.data?.message || 'Reminder email dispatched successfully!');
+      setTimeout(() => setTestEmailStatus(null), 5000);
+    } catch (err: any) {
+      console.error('Failed to send test email:', err);
+      setTestEmailStatus('Failed to dispatch test email. Please check your notification email.');
+      setTimeout(() => setTestEmailStatus(null), 5000);
+    } finally {
+      setTestEmailLoading(false);
     }
   };
 
@@ -319,6 +352,132 @@ export default function SettingsView() {
             </div>
 
           </form>
+        </CardContent>
+      </Card>
+
+      {/* Daily Email Reminders & Streak Notifications */}
+      <Card className="border border-slate-100 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-3xl overflow-hidden">
+        <CardHeader className="py-4 px-6 bg-gradient-to-r from-orange-50/50 to-amber-50/50 dark:from-orange-950/20 dark:to-amber-950/20 border-b border-orange-100/50 dark:border-orange-900/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-2xl bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                <Flame className="w-4 h-4 fill-orange-500 text-orange-500" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                  Daily Study Reminders & Streak Engine
+                </CardTitle>
+                <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                  Automated email briefings with your active streak and next milestone item.
+                </CardDescription>
+              </div>
+            </div>
+
+            {/* Streak Status Pill */}
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-extrabold text-xs rounded-full border border-amber-200 dark:border-amber-800">
+              <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+              <span>{streakCount} Day Streak ({longestStreak} Max)</span>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-6 space-y-5">
+          
+          {/* Toggle Switch */}
+          <div className="flex items-center justify-between p-4 bg-[#F8F9FD] dark:bg-slate-800/60 rounded-2xl border border-slate-200/70 dark:border-slate-700">
+            <div className="space-y-0.5">
+              <label className="text-xs font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Mail className="w-4 h-4 text-[#5051F9]" />
+                <span>Enable Daily Email Briefings</span>
+              </label>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Receive a daily nudge with your next curriculum module so you never break your streak.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setDailyReminderEnabled(!dailyReminderEnabled)}
+              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
+                dailyReminderEnabled ? 'bg-[#5051F9]' : 'bg-slate-300 dark:bg-slate-700'
+              }`}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  dailyReminderEnabled ? 'translate-x-6' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Time & Recipient Configuration */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            {/* Preferred Time */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#5051F9]" />
+                <span>Preferred Dispatch Time</span>
+              </label>
+              <select
+                value={dailyReminderTime}
+                onChange={(e) => setDailyReminderTime(e.target.value)}
+                disabled={!dailyReminderEnabled}
+                className="w-full bg-[#F8F9FD] dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-2xl px-3.5 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 disabled:opacity-50"
+              >
+                <option value="07:00">🌅 07:00 AM (Early Bird)</option>
+                <option value="09:00">☕ 09:00 AM (Morning Routine)</option>
+                <option value="12:00">🥪 12:00 PM (Mid-day Review)</option>
+                <option value="18:00">🌇 06:00 PM (Post-Work/School)</option>
+                <option value="20:00">🌙 08:00 PM (Evening Deep Work)</option>
+                <option value="22:00">🌌 10:00 PM (Night Owl Session)</option>
+              </select>
+            </div>
+
+            {/* Notification Email Override */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <Bell className="w-3.5 h-3.5 text-[#5051F9]" />
+                <span>Notification Email</span>
+              </label>
+              <input
+                type="email"
+                placeholder={user?.email || "e.g., student@example.com"}
+                value={notificationEmail}
+                onChange={(e) => setNotificationEmail(e.target.value)}
+                disabled={!dailyReminderEnabled}
+                className="w-full bg-[#F8F9FD] dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-2xl px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-200 disabled:opacity-50"
+              />
+            </div>
+
+          </div>
+
+          {/* Test Dispatch Button */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Want to see what your email briefing looks like? Send a preview test right now.
+            </p>
+
+            <div className="flex items-center gap-2">
+              {testEmailStatus && (
+                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 animate-in fade-in">
+                  ✓ {testEmailStatus}
+                </span>
+              )}
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSendTestEmail}
+                disabled={testEmailLoading}
+                className="text-xs font-extrabold rounded-full border-slate-200 dark:border-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-[#5051F9] cursor-pointer shadow-2xs"
+              >
+                <Send className="w-3 h-3 mr-1.5 text-[#5051F9]" />
+                <span>{testEmailLoading ? 'Dispatching...' : '⚡ Send Test Email Now'}</span>
+              </Button>
+            </div>
+          </div>
+
         </CardContent>
       </Card>
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   BookOpen, 
-  ExternalLink, 
   Sparkles, 
   Bookmark, 
   FolderGit2, 
@@ -10,8 +9,7 @@ import {
   FileCode, 
   Copy, 
   Check, 
-  ArrowRight,
-  Compass
+  ArrowRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
@@ -187,35 +185,33 @@ export default function ResourceFinder() {
         )}
       </div>
 
-      {/* Direct Roadmap.sh Live Link Card */}
-      {result?.roadmapShUrl && (
-        <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/80 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#5051F9] text-white flex items-center justify-center font-bold text-sm shadow-xs">
-              <Compass className="w-5 h-5" />
+      {/* PathWise Interactive Guide Banner */}
+      {result && (
+        <div className="p-5 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/40 dark:to-indigo-950/40 border border-purple-200/80 dark:border-purple-800/60 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-[#5051F9] text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+              <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-xs font-extrabold text-slate-900 flex items-center gap-2">
-                <span>Explore on Roadmap.sh Official Hub</span>
-                <span className="text-[10px] bg-[#EDE9FE] text-[#7C3AED] px-2 py-0.5 rounded-full font-extrabold uppercase">
-                  Interactive Node
+              <h3 className="text-xs md:text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>PathWise Native Learning Guide for "{result.query}"</span>
+                <span className="text-[10px] bg-[#EDE9FE] dark:bg-purple-950 text-[#7C3AED] dark:text-purple-300 px-2 py-0.5 rounded-full font-extrabold uppercase">
+                  In-App Guide
                 </span>
               </h3>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                Full visual career tree with community upvotes, alternative skill paths, and mastery benchmarks.
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                Full structured breakdown with code snippets, mental models, anti-patterns, and interactive sandbox challenges.
               </p>
             </div>
           </div>
 
-          <a
-            href={result.roadmapShUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="px-4 py-2 bg-white hover:bg-purple-50 text-[#5051F9] border border-purple-200 text-xs font-bold rounded-full transition-colors inline-flex items-center gap-1.5 shadow-2xs cursor-pointer self-start sm:self-auto"
+          <button
+            onClick={() => navigate(`/learn/${encodeURIComponent(result.query)}`)}
+            className="px-5 py-2.5 bg-[#5051F9] hover:bg-indigo-700 text-white text-xs font-bold rounded-full transition-colors inline-flex items-center gap-1.5 shadow-xs cursor-pointer shrink-0"
           >
-            <span>Open on Roadmap.sh</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+            <span>Open In-App Guide</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 

@@ -1,7 +1,82 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ExternalLink } from 'lucide-react';
 import api from '@/lib/api';
+
+function renderClickableText(content: string, isUser: boolean) {
+  if (!content) return null;
+  if (isUser) return <p className="whitespace-pre-line leading-relaxed">{content}</p>;
+
+  const lines = content.split('\n');
+  return lines.map((line, lineIdx) => {
+    const regex = /(\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|(https?:\/\/[^\s<)]+)|`([^`]+)`|\*\*([^*]+)\*\*)/g;
+    const elements: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex) {
+        elements.push(line.substring(lastIndex, match.index));
+      }
+
+      if (match[2] && match[3]) {
+        elements.push(
+          <a
+            key={`${lineIdx}-${match.index}`}
+            href={match[3]}
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-600 dark:text-blue-400 font-bold underline underline-offset-2 hover:opacity-80 inline-flex items-center gap-0.5 mx-0.5"
+          >
+            <span>{match[2]}</span>
+            <ExternalLink className="w-2.5 h-2.5 inline shrink-0" />
+          </a>
+        );
+      } else if (match[4]) {
+        elements.push(
+          <a
+            key={`${lineIdx}-${match.index}`}
+            href={match[4]}
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-600 dark:text-blue-400 font-bold underline underline-offset-2 hover:opacity-80 inline-flex items-center gap-0.5 mx-0.5 break-all"
+          >
+            <span>{match[4]}</span>
+            <ExternalLink className="w-2.5 h-2.5 inline shrink-0" />
+          </a>
+        );
+      } else if (match[5]) {
+        elements.push(
+          <code
+            key={`${lineIdx}-${match.index}`}
+            className="bg-slate-200/70 dark:bg-slate-700/70 text-indigo-600 px-1 py-0.5 rounded font-mono text-[10px]"
+          >
+            {match[5]}
+          </code>
+        );
+      } else if (match[6]) {
+        elements.push(
+          <strong key={`${lineIdx}-${match.index}`} className="font-bold">
+            {match[6]}
+          </strong>
+        );
+      }
+
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < line.length) {
+      elements.push(line.substring(lastIndex));
+    }
+
+    return (
+      <p key={lineIdx} className="my-0.5 leading-relaxed text-left">
+        {elements.length > 0 ? elements : '\u00A0'}
+      </p>
+    );
+  });
+}
 
 interface Message {
   id?: string;
@@ -142,10 +217,10 @@ export default function FloatingAIAssistant() {
                     className={`p-3 rounded-xl max-w-[85%] leading-relaxed ${
                       msg.role === 'user'
                         ? 'bg-blue-600 text-white rounded-tr-none'
-                        : 'bg-slate-100 text-slate-800 rounded-tl-none border'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-none border border-slate-200 dark:border-slate-700'
                     }`}
                   >
-                    {msg.content}
+                    {renderClickableText(msg.content, msg.role === 'user')}
                   </div>
                 </div>
 

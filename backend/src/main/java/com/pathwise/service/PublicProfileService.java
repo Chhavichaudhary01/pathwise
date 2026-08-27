@@ -97,8 +97,8 @@ public class PublicProfileService {
 
         // Generate 52-Week Learning Heatmap (365 days)
         List<HeatmapDayDto> heatmap = generate365DayHeatmap(completedItems);
-        int currentStreak = 14;
-        int longestStreak = 24;
+        int currentStreak = profile != null && profile.getStreakCount() != null ? profile.getStreakCount() : 1;
+        int longestStreak = profile != null && profile.getLongestStreak() != null ? profile.getLongestStreak() : currentStreak;
         int totalDaysActive = (int) heatmap.stream().filter(d -> d.getCount() > 0).count();
 
         String handle = cleanUsername.isBlank() ? (user.getEmail().split("@")[0]) : cleanUsername;

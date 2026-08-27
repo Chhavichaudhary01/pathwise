@@ -2,10 +2,15 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CheckCircle2, Circle, Clock, ExternalLink, MessageSquare, Sparkles, BookOpen, Zap } from 'lucide-react';
+import { 
+  CheckCircle2, Circle, Clock, MessageSquare, 
+  Sparkles, BookOpen, Zap, Search, Plus, ChevronDown, 
+  Compass, ArrowRight, X 
+} from 'lucide-react';
 import api from '@/lib/api';
 import RoadmapInteractiveGraph from '@/components/RoadmapInteractiveGraph';
 import ProofOfSkillModal from '@/components/sandbox/ProofOfSkillModal';
+import CreateRoadmapModal from '@/components/CreateRoadmapModal';
 
 interface CatalogItem {
   id: string;
@@ -56,8 +61,15 @@ export default function RoadmapView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
+  const [userRoadmaps, setUserRoadmaps] = useState<Roadmap[]>([]);
   const [loading, setLoading] = useState(true);
   const [narration, setNarration] = useState<string | null>(null);
+
+  // Search, Switcher & Modal States
+  const [searchFilter, setSearchFilter] = useState('');
+  const [roadmapDropdownOpen, setRoadmapDropdownOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [customGoalInput, setCustomGoalInput] = useState('');
 
   // Quiz Modal State
   const [quizModalOpen, setQuizModalOpen] = useState(false);
@@ -86,7 +98,17 @@ export default function RoadmapView() {
 
   useEffect(() => {
     fetchRoadmap();
+    fetchAllUserRoadmaps();
   }, [id]);
+
+  const fetchAllUserRoadmaps = async () => {
+    try {
+      const res = await api.get('/roadmaps');
+      setUserRoadmaps(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch user roadmaps:', err);
+    }
+  };
 
   const fetchRoadmap = async () => {
     try {
@@ -219,17 +241,47 @@ export default function RoadmapView() {
 
   if (!roadmap || !roadmap.milestones || roadmap.milestones.length === 0) {
     return (
-      <div className="w-full max-w-4xl mx-auto py-12 px-4 space-y-8 animate-in fade-in">
+      <div className="w-full max-w-4xl mx-auto py-12 px-4 space-y-8 animate-in fade-in text-left">
         <div className="text-center space-y-3">
           <div className="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-3xl mx-auto shadow-sm">
             🗺️
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            No Active Roadmap Found
+            Generate Your Personalized AI Roadmap
           </h2>
           <p className="text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
-            You haven't initialized your personalized skill graph yet. Choose a career track below or take the adaptive onboarding quiz to generate your custom path!
+            Search or enter any role, career goal, or technical topic to synthesize a prerequisite-resolved 3-phase curriculum with project milestones and verification sandboxes.
           </p>
+        </div>
+
+        {/* Custom Input & Instant Generator Card */}
+        <div className="p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-sm space-y-3 max-w-2xl mx-auto">
+          <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <Compass className="w-4 h-4 text-[#5051F9]" />
+            <span>Enter Target Career Track or Skill</span>
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="e.g., Rust Distributed Systems, AI Agents Developer, Solidity Auditor..."
+              value={customGoalInput}
+              onChange={(e) => setCustomGoalInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && customGoalInput.trim()) {
+                  handleQuickGenerate(customGoalInput.trim());
+                }
+              }}
+              className="flex-1 bg-[#F8F9FD] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-2.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5051F9]/30"
+            />
+            <Button
+              onClick={() => handleQuickGenerate(customGoalInput.trim())}
+              disabled={!customGoalInput.trim()}
+              className="bg-[#5051F9] hover:bg-indigo-700 text-white font-bold rounded-2xl px-5 py-2.5 text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <span>✨ Generate</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
 
         {/* Quick Track Starter Cards */}
@@ -243,16 +295,16 @@ export default function RoadmapView() {
             <button
               key={track.goal}
               onClick={() => handleQuickGenerate(track.goal)}
-              className="p-5 rounded-2xl bg-white border border-slate-200/90 hover:border-[#5051F9] hover:shadow-lg transition-all text-left flex items-start gap-4 group cursor-pointer"
+              className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-[#5051F9] hover:shadow-lg transition-all text-left flex items-start gap-4 group cursor-pointer"
             >
-              <span className="text-2xl p-2.5 rounded-xl bg-slate-50 group-hover:bg-indigo-50 border border-slate-100 transition-colors">
+              <span className="text-2xl p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 group-hover:bg-indigo-50 border border-slate-100 dark:border-slate-700 transition-colors">
                 {track.icon}
               </span>
               <div className="space-y-1">
-                <h4 className="text-sm font-extrabold text-slate-900 group-hover:text-[#5051F9] transition-colors">
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-[#5051F9] transition-colors">
                   {track.goal}
                 </h4>
-                <p className="text-[11px] text-slate-500 leading-snug">
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
                   {track.desc}
                 </p>
               </div>
@@ -277,32 +329,140 @@ export default function RoadmapView() {
   const progressPercent = allItems.length > 0 ? Math.round((completedCount / allItems.length) * 100) : 0;
   const totalHours = allItems.reduce((acc, curr) => acc + (curr.catalogItem?.estimatedHours || 5), 0);
 
+  // Filter items matching in-roadmap search query
+  const isItemMatching = (item: RoadmapItem) => {
+    if (!searchFilter.trim()) return true;
+    const q = searchFilter.toLowerCase();
+    return (
+      item.catalogItem?.title?.toLowerCase().includes(q) ||
+      item.catalogItem?.description?.toLowerCase().includes(q) ||
+      item.catalogItem?.skills?.some((s) => s.toLowerCase().includes(q)) ||
+      item.aiExplanation?.toLowerCase().includes(q)
+    );
+  };
+
+  const totalFilteredCount = allItems.filter(isItemMatching).length;
+
   return (
     <div className="space-y-6 w-full max-w-7xl mx-auto pb-12">
       
-      {/* Navigation & Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600 -ml-2 text-xs font-bold">
+      {/* Navigation & Header Toolbar */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        
+        {/* Left: Dashboard link & Roadmap Switcher */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-slate-600 dark:text-slate-400 -ml-2 text-xs font-bold">
             &larr; Dashboard
           </Button>
-          <Button variant="outline" onClick={() => navigate('/skill-graph')} className="text-xs font-bold text-[#5051F9] bg-[#EDE9FE] border-purple-200 rounded-full">
-            🕸️ Full Skill Graph
+
+          {/* User Roadmaps Dropdown Selector */}
+          <div className="relative">
+            <button 
+              onClick={() => setRoadmapDropdownOpen(!roadmapDropdownOpen)}
+              className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-1.5 rounded-full shadow-2xs hover:border-[#5051F9] transition-all text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <span>🗺️ {roadmap?.title || 'Switch Roadmap'}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+
+            {roadmapDropdownOpen && (
+              <div className="absolute left-0 top-full mt-2 w-72 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 p-2 space-y-1 animate-in fade-in zoom-in-95 duration-150 text-left">
+                <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                  Your Roadmaps ({userRoadmaps.length})
+                </div>
+                
+                {userRoadmaps.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => {
+                      navigate(`/roadmap/${r.id}`);
+                      setRoadmapDropdownOpen(false);
+                    }}
+                    className={`w-full p-2.5 rounded-xl text-left text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
+                      r.id === roadmap?.id 
+                        ? 'bg-indigo-50 dark:bg-indigo-950/60 text-[#5051F9] dark:text-indigo-400' 
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <span className="truncate pr-2">{r.title}</span>
+                    {r.id === roadmap?.id ? (
+                      <span className="text-[10px] font-extrabold text-[#5051F9] dark:text-indigo-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full shadow-2xs">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400">
+                        {r.milestones?.length || 0} Phases
+                      </span>
+                    )}
+                  </button>
+                ))}
+
+                <div className="border-t border-slate-100 dark:border-slate-800 my-1"></div>
+                
+                <button
+                  onClick={() => {
+                    setRoadmapDropdownOpen(false);
+                    setCreateModalOpen(true);
+                  }}
+                  className="w-full p-2.5 rounded-xl text-left text-xs font-extrabold text-[#5051F9] dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 flex items-center gap-2 cursor-pointer transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Create Custom AI Roadmap...</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          <Button 
+            variant="outline" 
+            onClick={() => setCreateModalOpen(true)} 
+            className="text-xs font-bold text-[#5051F9] dark:text-indigo-400 border-indigo-200 dark:border-indigo-800 rounded-full flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Roadmap</span>
           </Button>
-          <Button variant="outline" onClick={() => navigate('/portfolio')} className="text-xs font-bold rounded-full">
-            📜 Portfolio
+
+          <Button variant="outline" onClick={() => navigate('/skill-graph')} className="text-xs font-bold text-[#5051F9] bg-[#EDE9FE] dark:bg-indigo-950/50 border-purple-200 dark:border-indigo-800 rounded-full">
+            🕸️ Full Skill Graph
           </Button>
         </div>
           
-        <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-slate-100 shadow-2xs">
-          <span className="text-xs font-bold text-slate-700">Roadmap Progress: {progressPercent}%</span>
-          <div className="w-28 bg-slate-100 rounded-full h-2 overflow-hidden">
-            <div 
-              className="bg-[#5051F9] h-2 rounded-full transition-all duration-500" 
-              style={{ width: `${progressPercent}%` }}
+        {/* Right: In-Roadmap Search & Progress Pill */}
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          
+          {/* Live In-Roadmap Search Filter */}
+          <div className="relative flex-1 md:w-64">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search skills in roadmap..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full pl-8 pr-7 py-1.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5051F9]/20 focus:border-[#5051F9] shadow-2xs transition-all"
             />
+            {searchFilter && (
+              <button 
+                onClick={() => setSearchFilter('')} 
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-1.5 rounded-full border border-slate-100 dark:border-slate-800 shadow-2xs shrink-0">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              {searchFilter ? `${totalFilteredCount} Matched` : `${progressPercent}% Done`}
+            </span>
+            <div className="w-20 bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div 
+                className="bg-[#5051F9] h-2 rounded-full transition-all duration-500" 
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
           </div>
         </div>
+
       </div>
 
       {/* Adaptive Recalibration Narration Banner */}
@@ -317,7 +477,7 @@ export default function RoadmapView() {
       )}
 
       {/* Roadmap Hero Banner */}
-      <Card className="border border-slate-100 shadow-sm bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white rounded-3xl overflow-hidden">
+      <Card className="border border-slate-100 dark:border-slate-800 shadow-sm bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white rounded-3xl overflow-hidden">
         <CardHeader className="p-6 md:p-8">
           <div className="flex flex-wrap items-center gap-2 text-blue-300 text-[10px] font-extrabold uppercase tracking-wider mb-1">
             <span className="bg-blue-500/20 px-2 py-0.5 rounded-full border border-blue-400/30">🎯 Topological DAG Verified</span>
@@ -328,7 +488,7 @@ export default function RoadmapView() {
           </div>
           <CardTitle className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">{roadmap?.title}</CardTitle>
           <CardDescription className="text-slate-300 text-xs mt-1">
-            Curated 3-Phase milestone sequence: Hands-on project start, zero circular dependencies, and live Mermaid DAG dependency visualization.
+            Curated 3-Phase milestone sequence: Hands-on project start, zero circular dependencies, and live interactive DAG dependency visualization.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -365,10 +525,19 @@ export default function RoadmapView() {
 
               {/* Items in Milestone */}
               <div className="space-y-3">
-                {milestone.items?.map((item, iIdx) => {
-                  const isCompleted = item.status === 'COMPLETED';
-                  const isInProgress = item.status === 'IN_PROGRESS';
-                  const ci = item.catalogItem || ({} as CatalogItem);
+                {(() => {
+                  const matchingItems = milestone.items?.filter(isItemMatching) || [];
+                  if (matchingItems.length === 0 && searchFilter.trim()) {
+                    return (
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
+                        No skills in Phase {mIdx + 1} match "{searchFilter}"
+                      </div>
+                    );
+                  }
+                  return matchingItems.map((item, iIdx) => {
+                    const isCompleted = item.status === 'COMPLETED';
+                    const isInProgress = item.status === 'IN_PROGRESS';
+                    const ci = item.catalogItem || ({} as CatalogItem);
 
                   return (
                     <Card 
@@ -481,19 +650,20 @@ export default function RoadmapView() {
 
                         {/* Action Link & Feedback */}
                         <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                          {ci.url ? (
-                            <a 
-                              href={ci.url} 
-                              target="_blank" 
-                              rel="noreferrer" 
-                              className="text-[#5051F9] font-bold hover:underline inline-flex items-center gap-1 text-[11px]"
-                            >
-                              <span>Resource Material</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          ) : (
-                            <span className="text-[10px] text-slate-400">Curated by PathWise</span>
-                          )}
+                          <button 
+                            type="button"
+                            onClick={() => navigate(`/learn/${encodeURIComponent(ci.title || 'Skill')}`, {
+                              state: {
+                                topic: ci.title,
+                                itemId: item.id,
+                                roadmapTitle: roadmap?.title
+                              }
+                            })}
+                            className="text-[#5051F9] font-bold hover:underline inline-flex items-center gap-1.5 text-[11px] cursor-pointer"
+                          >
+                            <BookOpen className="w-3.5 h-3.5 text-[#5051F9]" />
+                            <span>Resource Material & Guide</span>
+                          </button>
 
                           <button 
                             onClick={() => setFeedbackModalItem(item.id)}
@@ -533,7 +703,8 @@ export default function RoadmapView() {
                       </CardContent>
                     </Card>
                   );
-                })}
+                });
+              })()}
               </div>
 
             </div>
@@ -667,12 +838,38 @@ export default function RoadmapView() {
                   >
                     Submit Mastery Check 🚀
                   </button>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+      {/* Proof of Skill Sandbox Modal */}
+      <ProofOfSkillModal
+        isOpen={sandboxModalOpen}
+        onClose={() => setSandboxModalOpen(false)}
+        skillName={sandboxSkill}
+        topicTitle={sandboxTopic}
+        roadmapItemId={sandboxItemId}
+        onSuccess={() => {
+          if (sandboxItemId && roadmap) {
+            toggleItemStatus(sandboxItemId, 'IN_PROGRESS', 'COMPLETED');
+          }
+        }}
+      />
+
+      {/* Custom AI Roadmap Generator Modal */}
+      <CreateRoadmapModal
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onRoadmapCreated={(newRoadmap) => {
+          fetchAllUserRoadmaps();
+          if (newRoadmap?.id) {
+            navigate(`/roadmap/${newRoadmap.id}`);
+          }
+        }}
+      />
 
     </div>
   );

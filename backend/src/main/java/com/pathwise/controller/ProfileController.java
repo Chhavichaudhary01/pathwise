@@ -88,6 +88,24 @@ public class ProfileController {
         if (newProfile.getAddress() != null && !newProfile.getAddress().isBlank()) {
             profile.setAddress(newProfile.getAddress());
         }
+        if (newProfile.getLearningStyle() != null && !newProfile.getLearningStyle().isBlank()) {
+            profile.setLearningStyle(newProfile.getLearningStyle());
+        }
+        if (newProfile.getDailyReminderEnabled() != null) {
+            profile.setDailyReminderEnabled(newProfile.getDailyReminderEnabled());
+        }
+        if (newProfile.getDailyReminderTime() != null && !newProfile.getDailyReminderTime().isBlank()) {
+            profile.setDailyReminderTime(newProfile.getDailyReminderTime());
+        }
+        if (newProfile.getNotificationEmail() != null && !newProfile.getNotificationEmail().isBlank()) {
+            profile.setNotificationEmail(newProfile.getNotificationEmail().trim());
+        }
+        if (newProfile.getStreakCount() != null) {
+            profile.setStreakCount(newProfile.getStreakCount());
+        }
+        if (newProfile.getLongestStreak() != null) {
+            profile.setLongestStreak(newProfile.getLongestStreak());
+        }
         if (newProfile.getIsProfileComplete() != null) {
             profile.setIsProfileComplete(newProfile.getIsProfileComplete());
         } else if (profile.getAge() != null && profile.getClassGrade() != null) {
