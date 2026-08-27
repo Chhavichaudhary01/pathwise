@@ -94,8 +94,14 @@ export default function PortfolioView() {
         </Button>
 
         <div className="flex items-center gap-3">
+          <Button 
+            onClick={() => window.open(`/@${user?.email ? user.email.split('@')[0] : 'alexansh'}`, '_blank')} 
+            className="text-xs font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-full shadow-md cursor-pointer"
+          >
+            🌐 Public Vanity Showcase (/@{user?.email ? user.email.split('@')[0] : 'alexansh'})
+          </Button>
           <Button onClick={handleShare} variant="outline" className="text-xs font-bold text-[#5051F9] bg-[#EDE9FE] border-purple-200 rounded-full shadow-2xs">
-            {copied ? '✓ Link Copied!' : '🔗 Copy Shareable Portfolio Link'}
+            {copied ? '✓ Link Copied!' : '🔗 Copy Shareable Link'}
           </Button>
           <Button onClick={() => window.print()} className="text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 rounded-full shadow-xs">
             📄 Export PDF
