@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
-  CheckCircle2, Circle, Clock, ExternalLink, MessageSquare, 
+  CheckCircle2, Circle, Clock, MessageSquare, 
   Sparkles, BookOpen, Zap, Search, Plus, ChevronDown, 
   Compass, ArrowRight, X 
 } from 'lucide-react';
@@ -650,19 +650,20 @@ export default function RoadmapView() {
 
                         {/* Action Link & Feedback */}
                         <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                          {ci.url ? (
-                            <a 
-                              href={ci.url} 
-                              target="_blank" 
-                              rel="noreferrer" 
-                              className="text-[#5051F9] font-bold hover:underline inline-flex items-center gap-1 text-[11px]"
-                            >
-                              <span>Resource Material</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
-                          ) : (
-                            <span className="text-[10px] text-slate-400">Curated by PathWise</span>
-                          )}
+                          <button 
+                            type="button"
+                            onClick={() => navigate(`/learn/${encodeURIComponent(ci.title || 'Skill')}`, {
+                              state: {
+                                topic: ci.title,
+                                itemId: item.id,
+                                roadmapTitle: roadmap?.title
+                              }
+                            })}
+                            className="text-[#5051F9] font-bold hover:underline inline-flex items-center gap-1.5 text-[11px] cursor-pointer"
+                          >
+                            <BookOpen className="w-3.5 h-3.5 text-[#5051F9]" />
+                            <span>Resource Material & Guide</span>
+                          </button>
 
                           <button 
                             onClick={() => setFeedbackModalItem(item.id)}

@@ -17,6 +17,7 @@ import ResourceFinder from './pages/ResourceFinder';
 import ResumeAnalyzerView from './pages/ResumeAnalyzerView';
 import CareerPlannerView from './pages/CareerPlannerView';
 import PublicPortfolioView from './pages/PublicPortfolioView';
+import ResourceGuideView from './pages/ResourceGuideView';
 import FloatingAIAssistant from './components/FloatingAIAssistant';
 import AppLayout from './components/AppLayout';
 
@@ -51,6 +52,9 @@ function App() {
           <Route path="/lms" element={<DashboardCoursue />} />
           <Route path="/roadmap" element={<RoadmapView />} />
           <Route path="/roadmap/:id" element={<RoadmapView />} />
+          <Route path="/learn" element={<ResourceGuideView />} />
+          <Route path="/learn/:topicSlug" element={<ResourceGuideView />} />
+          <Route path="/resource-guide" element={<ResourceGuideView />} />
           <Route path="/planner" element={<CareerPlannerView />} />
           <Route path="/schedule" element={<CareerPlannerView />} />
           <Route path="/resume-analyzer" element={<ResumeAnalyzerView />} />

@@ -1,7 +1,8 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   X, Clock, TrendingUp, Star, 
-  ExternalLink, Sparkles, ArrowRight, ShieldCheck, BookOpen, Layers, Zap
+  Sparkles, ArrowRight, ShieldCheck, BookOpen, Layers, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { SkillNodeData } from './SkillNode';
@@ -21,6 +22,7 @@ export const SkillDetailDrawer: React.FC<SkillDetailDrawerProps> = ({
   onAskAi,
   onTestOut
 }) => {
+  const navigate = useNavigate();
   if (!skill) return null;
 
   const isCompleted = skill.status === 'COMPLETED';
@@ -231,20 +233,25 @@ export const SkillDetailDrawer: React.FC<SkillDetailDrawerProps> = ({
           </h4>
           
           <div className="space-y-2">
-            {skill.url && (
-              <a
-                href={skill.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-indigo-500/60 hover:bg-slate-900 text-white text-xs font-bold transition-all group"
-              >
-                <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-indigo-400" />
-                  <span>Roadmap.sh Resource Guide</span>
-                </div>
-                <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-300" />
-              </a>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                navigate(`/learn/${encodeURIComponent(skill.title)}`, {
+                  state: {
+                    topic: skill.title,
+                    itemId: skill.id
+                  }
+                });
+              }}
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-indigo-500/60 hover:bg-slate-900 text-white text-xs font-bold transition-all cursor-pointer group"
+            >
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-indigo-400" />
+                <span>Open PathWise Interactive Resource Guide</span>
+              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-300 group-hover:translate-x-0.5 transition-transform" />
+            </button>
 
             {onAskAi && (
               <button
