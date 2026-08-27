@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CheckCircle2, Circle, Clock, ExternalLink, MessageSquare, Sparkles, BookOpen } from 'lucide-react';
 import api from '@/lib/api';
-import RoadmapMermaidGraph from '@/components/RoadmapMermaidGraph';
+import RoadmapInteractiveGraph from '@/components/RoadmapInteractiveGraph';
 
 interface CatalogItem {
   id: string;
@@ -443,11 +443,13 @@ export default function RoadmapView() {
           ))}
         </div>
 
-        {/* Right: Visual Mermaid DAG Graph (5 cols, sticky) */}
+        {/* Right: Interactive React Flow DAG Graph (5 cols, sticky) */}
         <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-6">
-          <RoadmapMermaidGraph 
+          <RoadmapInteractiveGraph 
             roadmapTitle={roadmap?.title}
             milestones={roadmap?.milestones}
+            onItemStatusChange={toggleItemStatus}
+            onAskAi={(topic) => navigate('/chat', { state: { initialMessage: `Can you give me a comprehensive breakdown and key concepts for ${topic}?` } })}
           />
         </div>
 
