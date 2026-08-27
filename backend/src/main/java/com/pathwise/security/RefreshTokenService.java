@@ -1,6 +1,7 @@
 package com.pathwise.security;
 
 import com.pathwise.domain.RefreshToken;
+import com.pathwise.domain.User;
 import com.pathwise.exception.TokenRefreshException;
 import com.pathwise.repository.RefreshTokenRepository;
 import com.pathwise.repository.UserRepository;
@@ -26,15 +27,17 @@ public class RefreshTokenService {
         return refreshTokenRepository.findByToken(token);
     }
 
+    @Transactional
     public RefreshToken createRefreshToken(UUID userId) {
-        RefreshToken refreshToken = new RefreshToken();
+        User user = userRepository.findById(userId).orElseThrow();
+        refreshTokenRepository.deleteByUser(user);
 
-        refreshToken.setUser(userRepository.findById(userId).get());
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setUser(user);
         refreshToken.setExpiryDate(OffsetDateTime.now().plusSeconds(refreshTokenDurationMs / 1000));
         refreshToken.setToken(UUID.randomUUID().toString());
 
-        refreshToken = refreshTokenRepository.save(refreshToken);
-        return refreshToken;
+        return refreshTokenRepository.save(refreshToken);
     }
 
     public RefreshToken verifyExpiration(RefreshToken token) {
