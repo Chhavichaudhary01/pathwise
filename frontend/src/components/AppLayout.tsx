@@ -22,7 +22,8 @@ import {
   X,
   UserCheck,
   BookOpen,
-  FileText
+  FileText,
+  Calendar
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
@@ -73,6 +74,7 @@ export default function AppLayout() {
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, exact: true },
     { label: 'Resume Gap Bridge', path: '/resume-analyzer', icon: FileText, alias: '/resume' },
+    { label: 'Career Planner', path: '/planner', icon: Calendar, alias: '/schedule' },
     { label: 'Projects', path: '/projects', icon: FolderKanban, alias: '/roadmap' },
     { label: 'My Tasks', path: '/my-task', icon: CheckSquare },
     { label: 'Coursue LMS', path: '/coursue', icon: Compass },

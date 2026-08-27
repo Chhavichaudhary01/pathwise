@@ -198,6 +198,12 @@ export default function Dashboard() {
               </button>
             )}
             <button
+              onClick={() => navigate('/planner')}
+              className="bg-purple-950/80 hover:bg-purple-900 text-purple-200 border border-purple-400/40 font-extrabold text-xs px-4 py-2.5 rounded-full shadow-md transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <span>📅 Career Planner & Calendar</span>
+            </button>
+            <button
               onClick={() => navigate('/resume-analyzer')}
               className="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-full shadow-md transition-colors cursor-pointer flex items-center gap-1.5"
             >
