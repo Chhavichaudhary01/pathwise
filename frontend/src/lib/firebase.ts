@@ -11,14 +11,14 @@ import {
 } from 'firebase/auth';
 
 // Standard Firebase Configuration
-// Users can provide these in frontend/.env (VITE_FIREBASE_API_KEY, etc.)
+// Environment variables override these if provided in .env
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDemo-PathWise-MockKeyForOAuth",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "pathwise-ai.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "pathwise-ai",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "pathwise-ai.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "103948572019",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:103948572019:web:a938d9f10928374a"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyAN_E57hpNEZIR73SvUsu6SEzb7NduHd9I",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "pathwise-27748.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "pathwise-27748",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "pathwise-27748.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "174923823762",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:174923823762:web:2a7c36eb96c3f9ae2b444b"
 };
 
 // Initialize Firebase singleton

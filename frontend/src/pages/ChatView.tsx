@@ -30,6 +30,137 @@ const POPULAR_SEARCH_TOPICS = [
   "How to build production RAG with Vector Embeddings and LangChain?"
 ];
 
+function renderFormattedMessage(content: string, sources?: SourceCitation[], isUser: boolean = false) {
+  if (!content) return null;
+  if (isUser) return <p className="whitespace-pre-line leading-relaxed">{content}</p>;
+
+  const lines = content.split('\n');
+  return lines.map((line, lineIdx) => {
+    const isHeader = /^#{1,4}\s/.test(line);
+    const cleanLine = isHeader ? line.replace(/^#{1,4}\s*/, '') : line;
+
+    // Tokenize line by markdown links, raw urls, citations, code, and bold
+    const regex = /(\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|\[(\d+)\]|(https?:\/\/[^\s<)]+)|`([^`]+)`|\*\*([^*]+)\*\*)/g;
+    const elements: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(cleanLine)) !== null) {
+      if (match.index > lastIndex) {
+        elements.push(cleanLine.substring(lastIndex, match.index));
+      }
+
+      if (match[2] && match[3]) {
+        // Markdown link: [text](url)
+        const linkText = match[2];
+        const linkUrl = match[3];
+        elements.push(
+          <a
+            key={`${lineIdx}-${match.index}`}
+            href={linkUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[#5051F9] dark:text-indigo-400 font-bold underline underline-offset-2 hover:opacity-80 inline-flex items-center gap-0.5 mx-0.5"
+          >
+            <span>{linkText}</span>
+            <ExternalLink className="w-3 h-3 inline shrink-0" />
+          </a>
+        );
+      } else if (match[4]) {
+        // Citation: [1]
+        const num = match[4];
+        const src = sources?.find(s => s.index === num || s.index === `${parseInt(num)}`);
+        const targetUrl = src?.url || (sources && sources[parseInt(num) - 1]?.url);
+
+        if (targetUrl) {
+          elements.push(
+            <a
+              key={`${lineIdx}-${match.index}`}
+              href={targetUrl}
+              target="_blank"
+              rel="noreferrer"
+              title={src?.title || `Citation [${num}]`}
+              className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-extrabold text-[#5051F9] dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 rounded-md mx-0.5 hover:scale-110 transition-transform cursor-pointer"
+            >
+              [{num}]
+            </a>
+          );
+        } else {
+          elements.push(
+            <span
+              key={`${lineIdx}-${match.index}`}
+              className="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-extrabold text-[#5051F9] dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 rounded-md mx-0.5"
+            >
+              [{num}]
+            </span>
+          );
+        }
+      } else if (match[5]) {
+        // Raw URL
+        const rawUrl = match[5];
+        elements.push(
+          <a
+            key={`${lineIdx}-${match.index}`}
+            href={rawUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[#5051F9] dark:text-indigo-400 font-bold underline underline-offset-2 hover:opacity-80 inline-flex items-center gap-0.5 mx-0.5 break-all"
+          >
+            <span>{rawUrl}</span>
+            <ExternalLink className="w-3 h-3 inline shrink-0" />
+          </a>
+        );
+      } else if (match[6]) {
+        // Inline code: `code`
+        elements.push(
+          <code
+            key={`${lineIdx}-${match.index}`}
+            className="bg-slate-200/70 dark:bg-slate-700/70 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded font-mono text-[11px]"
+          >
+            {match[6]}
+          </code>
+        );
+      } else if (match[7]) {
+        // Bold: **text**
+        elements.push(
+          <strong key={`${lineIdx}-${match.index}`} className="font-bold text-slate-900 dark:text-slate-100">
+            {match[7]}
+          </strong>
+        );
+      }
+
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < cleanLine.length) {
+      elements.push(cleanLine.substring(lastIndex));
+    }
+
+    if (isHeader) {
+      return (
+        <h4 key={lineIdx} className="text-xs md:text-sm font-black text-slate-900 dark:text-slate-100 mt-2.5 mb-1 text-left">
+          {elements}
+        </h4>
+      );
+    }
+
+    if (cleanLine.startsWith('- ') || cleanLine.startsWith('* ')) {
+      return (
+        <div key={lineIdx} className="flex items-start gap-2 pl-1 my-0.5 text-left">
+          <span className="text-[#5051F9] dark:text-indigo-400 font-bold">•</span>
+          <div className="flex-1">{elements}</div>
+        </div>
+      );
+    }
+
+    return (
+      <p key={lineIdx} className="my-0.5 leading-relaxed text-left">
+        {elements.length > 0 ? elements : '\u00A0'}
+      </p>
+    );
+  });
+}
+
 export default function ChatView() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -263,8 +394,8 @@ export default function ChatView() {
                         : 'bg-[#F8F9FD] dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 rounded-tl-xs border border-slate-200/80 dark:border-slate-700/80'
                     }`}
                   >
-                    <div className="whitespace-pre-line leading-relaxed space-y-2">
-                      {msg.content}
+                    <div className="leading-relaxed space-y-1.5">
+                      {renderFormattedMessage(msg.content, msg.sources, isUser)}
                     </div>
 
                     {/* Copy & Feedback Bar */}
