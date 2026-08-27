@@ -35,7 +35,11 @@ export default function Register() {
       }
     } catch (err: any) {
       console.error('Google registration error:', err);
-      setError(err.message || 'Google Sign-Up failed. Please try again.');
+      if (err.message?.includes('api-key-not-valid') || err.message?.includes('invalid-api-key')) {
+        setError('Firebase API Key missing: Please add your Firebase credentials to frontend/.env (see frontend/.env.example). You can also register with standard email below!');
+      } else {
+        setError(err.message || 'Google Sign-Up failed. Please try again.');
+      }
     } finally {
       setGoogleLoading(false);
     }

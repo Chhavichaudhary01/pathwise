@@ -35,7 +35,11 @@ export default function Login() {
       }
     } catch (err: any) {
       console.error('Google login error:', err);
-      setError(err.message || 'Google Sign-In failed. Please try again.');
+      if (err.message?.includes('api-key-not-valid') || err.message?.includes('invalid-api-key')) {
+        setError('Firebase API Key missing: Please add your Firebase credentials to frontend/.env (see frontend/.env.example). You can also use standard email login or 1-Click Demo Login below!');
+      } else {
+        setError(err.message || 'Google Sign-In failed. Please try again.');
+      }
     } finally {
       setGoogleLoading(false);
     }
