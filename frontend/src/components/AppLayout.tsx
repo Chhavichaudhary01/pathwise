@@ -28,6 +28,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
 import StudentProfileModal from './StudentProfileModal';
+import CreateRoadmapModal from './CreateRoadmapModal';
 import ThemeToggle from './ThemeToggle';
 
 export default function AppLayout() {
@@ -39,9 +40,12 @@ export default function AppLayout() {
   const [profile, setProfile] = useState<any>(null);
   const [roadmaps, setRoadmaps] = useState<any[]>([]);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [createRoadmapModalOpen, setCreateRoadmapModalOpen] = useState(false);
   const [isMandatoryModal, setIsMandatoryModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
 
-  useEffect(() => {
+  const fetchLayoutData = () => {
     Promise.all([
       api.get('/profile').catch(() => ({ data: null })),
       api.get('/roadmaps').catch(() => ({ data: [] }))
@@ -56,6 +60,10 @@ export default function AppLayout() {
         setProfileModalOpen(true);
       }
     });
+  };
+
+  useEffect(() => {
+    fetchLayoutData();
   }, [location.pathname]);
 
   const handleLogout = () => {
@@ -267,17 +275,85 @@ export default function AppLayout() {
           {/* Persistent Top Search & User Actions Bar */}
           <header className="flex flex-col sm:flex-row items-center justify-between gap-4">
             
-            {/* Search Input with ⌘F hint */}
+            {/* Search Input with Live Dropdown */}
             <div className="relative flex-1 max-w-lg w-full">
               <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search roadmaps, projects, skills, or milestones...."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setTimeout(() => setSearchFocused(false), 250)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim()) {
+                    setCreateRoadmapModalOpen(true);
+                    setSearchFocused(false);
+                  }
+                }}
                 className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-full pl-10 pr-12 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5051F9]/20 focus:border-[#5051F9] shadow-2xs transition-all"
               />
               <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded font-mono font-medium border border-slate-200 dark:border-slate-700">
                 ⌘F
               </span>
+
+              {/* Search Results / Quick Create Overlay */}
+              {searchFocused && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 p-2 space-y-1.5 animate-in fade-in zoom-in-95 duration-150 text-left">
+                  
+                  {/* Matching Existing Roadmaps */}
+                  {roadmaps.filter(r => !searchQuery.trim() || r.title?.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 4).map((rm) => (
+                    <button
+                      key={rm.id}
+                      onMouseDown={() => {
+                        navigate(`/roadmap/${rm.id}`);
+                        setSearchQuery('');
+                        setSearchFocused(false);
+                      }}
+                      className="w-full p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/80 flex items-center justify-between text-left transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="text-base p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-[#5051F9] dark:text-indigo-400 font-bold text-xs">
+                          🗺️
+                        </span>
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 group-hover:text-[#5051F9] dark:group-hover:text-indigo-400 truncate">
+                            {rm.title}
+                          </h4>
+                          <p className="text-[10px] text-slate-400">
+                            {rm.milestones?.length || 0} Phases • {rm.status || 'ACTIVE'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full">
+                        Open &rarr;
+                      </span>
+                    </button>
+                  ))}
+
+                  {/* Create New Custom Roadmap Action */}
+                  <button
+                    onMouseDown={() => {
+                      setCreateRoadmapModalOpen(true);
+                      setSearchFocused(false);
+                    }}
+                    className="w-full p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/40 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/50 flex items-center gap-2.5 text-left transition-colors cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4 text-[#5051F9] dark:text-indigo-400 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-extrabold text-[#5051F9] dark:text-indigo-300 block truncate">
+                        {searchQuery.trim()
+                          ? `✨ Create AI Roadmap for "${searchQuery}"`
+                          : '✨ Create Custom AI Roadmap...'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        Synthesize prerequisite tree & milestones with AI
+                      </span>
+                    </div>
+                  </button>
+
+                </div>
+              )}
             </div>
 
             {/* Action Buttons & Profile */}
@@ -285,7 +361,7 @@ export default function AppLayout() {
               <ThemeToggle />
 
               <button
-                onClick={() => navigate('/onboarding')}
+                onClick={() => setCreateRoadmapModalOpen(true)}
                 className="bg-[#5051F9] hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-full flex items-center gap-2 shadow-xs transition-transform hover:scale-105 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -347,6 +423,15 @@ export default function AppLayout() {
         onProfileUpdated={(updated) => {
           setProfile(updated);
           setIsMandatoryModal(false);
+        }}
+      />
+
+      {/* Custom AI Roadmap Generator Modal */}
+      <CreateRoadmapModal
+        isOpen={createRoadmapModalOpen}
+        onClose={() => setCreateRoadmapModalOpen(false)}
+        onRoadmapCreated={() => {
+          fetchLayoutData();
         }}
       />
 
