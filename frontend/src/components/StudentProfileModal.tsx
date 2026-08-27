@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { User, GraduationCap, MapPin, Sparkles, X, CheckCircle2, Bookmark } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User, GraduationCap, MapPin, Sparkles, X, CheckCircle2, Bookmark, Camera, Upload, Trash2 } from 'lucide-react';
 import api from '@/lib/api';
 
 interface StudentProfileModalProps {
@@ -23,6 +23,15 @@ const INTERESTS_OPTIONS = [
   'UI/UX & Product Design'
 ];
 
+const PRESET_AVATARS = [
+  { label: 'Pro', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
+  { label: 'Geek', url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80' },
+  { label: 'Innovator', url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80' },
+  { label: 'Coder', url: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150&auto=format&fit=crop&q=80' },
+  { label: '3D Art', url: 'https://images.unsplash.com/photo-1628157582853-a796fa650a6a?w=150&auto=format&fit=crop&q=80' },
+  { label: 'Cyber', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80' },
+];
+
 export default function StudentProfileModal({
   isOpen,
   onClose,
@@ -30,6 +39,7 @@ export default function StudentProfileModal({
   initialProfile,
   mandatory = false
 }: StudentProfileModalProps) {
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [age, setAge] = useState<number | ''>('');
   const [classGrade, setClassGrade] = useState('Undergraduate (B.Tech / BCA / B.Sc)');
   const [board, setBoard] = useState('Autonomous / State University');
@@ -41,8 +51,11 @@ export default function StudentProfileModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (initialProfile) {
+      if (initialProfile.avatarUrl) setAvatarUrl(initialProfile.avatarUrl);
       if (initialProfile.age) setAge(initialProfile.age);
       if (initialProfile.classGrade) setClassGrade(initialProfile.classGrade);
       if (initialProfile.board) setBoard(initialProfile.board);
@@ -63,6 +76,21 @@ export default function StudentProfileModal({
   }, [initialProfile, isOpen]);
 
   if (!isOpen) return null;
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Photo must be less than 5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const toggleInterest = (interest: string) => {
     setSelectedInterests(prev => 
@@ -88,6 +116,7 @@ export default function StudentProfileModal({
 
     try {
       const payload = {
+        avatarUrl,
         age: Number(age),
         classGrade: classGrade.trim(),
         board: board.trim(),
@@ -148,10 +177,85 @@ export default function StudentProfileModal({
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 flex-1 text-left">
           
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-xs font-semibold">
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-2xl text-red-700 dark:text-red-300 text-xs font-semibold">
               {error}
             </div>
           )}
+
+          {/* Profile Picture Upload & Presets */}
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <Camera className="w-3.5 h-3.5 text-[#5051F9]" />
+                <span>Profile Picture</span>
+              </label>
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={() => setAvatarUrl('')}
+                  className="text-[11px] font-bold text-red-500 hover:text-red-600 flex items-center gap-1 cursor-pointer"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Remove Photo</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              {/* Avatar Preview */}
+              <div className="relative group shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#4F46E5] to-cyan-400 p-[2px] shadow-sm">
+                  <div className="w-full h-full rounded-[14px] bg-slate-900 overflow-hidden flex items-center justify-center text-xl font-black text-white">
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <span>👤</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Upload Action & Presets */}
+              <div className="flex-1 space-y-2 w-full">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-[#5051F9] px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 shadow-2xs hover:shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-[#5051F9]" />
+                    <span>Upload Custom Photo</span>
+                  </button>
+                  <span className="text-[10px] text-slate-400">PNG, JPG, WebP &lt; 5MB</span>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] text-slate-400 font-bold mr-1">Presets:</span>
+                  {PRESET_AVATARS.map((p, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setAvatarUrl(p.url)}
+                      className={`w-7 h-7 rounded-lg overflow-hidden border transition-all cursor-pointer ${
+                        avatarUrl === p.url ? 'ring-2 ring-[#5051F9] border-transparent scale-110' : 'border-slate-200 dark:border-slate-700 opacity-70 hover:opacity-100'
+                      }`}
+                      title={p.label}
+                    >
+                      <img src={p.url} alt={p.label} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Age & Class Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

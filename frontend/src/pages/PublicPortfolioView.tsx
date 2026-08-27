@@ -14,6 +14,7 @@ interface PublicProfile {
   username: string;
   displayName: string;
   email: string;
+  avatarUrl?: string;
   targetRole: string;
   bio: string;
   currentStreakDays: number;
@@ -124,8 +125,12 @@ export default function PublicPortfolioView() {
               {/* Glowing Avatar */}
               <div className="relative">
                 <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 p-[3px] shadow-[0_0_25px_rgba(99,102,241,0.5)]">
-                  <div className="w-full h-full rounded-[21px] bg-slate-950 flex items-center justify-center text-3xl sm:text-4xl font-black text-white">
-                    {profile?.displayName?.charAt(0) || 'L'}
+                  <div className="w-full h-full rounded-[21px] bg-slate-950 overflow-hidden flex items-center justify-center text-3xl sm:text-4xl font-black text-white">
+                    {profile?.avatarUrl ? (
+                      <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      profile?.displayName?.charAt(0) || 'L'
+                    )}
                   </div>
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-black text-xs border-2 border-slate-950 shadow-md">

@@ -22,6 +22,9 @@ public class LearnerProfile {
 
     private String goal;
 
+    @Column(name = "avatar_url", columnDefinition = "text")
+    private String avatarUrl;
+
     private Integer age;
 
     @Column(name = "class_grade")

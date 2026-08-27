@@ -108,6 +108,7 @@ public class PublicProfileService {
                 .username(handle)
                 .displayName(handle.substring(0, 1).toUpperCase() + handle.substring(1))
                 .email(user.getEmail())
+                .avatarUrl(profile != null ? profile.getAvatarUrl() : null)
                 .targetRole(targetRole)
                 .bio("Engineering continuous learner on PathWise. Mastering topological prerequisites with verified cryptographic proof-of-skill.")
                 .currentStreakDays(currentStreak)

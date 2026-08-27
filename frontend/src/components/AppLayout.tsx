@@ -316,14 +316,14 @@ export default function AppLayout() {
                 className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 py-1 px-2.5 rounded-full shadow-2xs cursor-pointer hover:border-purple-200 dark:hover:border-indigo-500/40 transition-colors"
                 title="Click to edit profile"
               >
-                <div className="w-7 h-7 rounded-full overflow-hidden bg-purple-100">
+                <div className="w-7 h-7 rounded-full overflow-hidden bg-purple-100 dark:bg-slate-800">
                   <img
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+                    src={profile?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"}
                     alt="User Avatar"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <span className="text-xs font-bold text-slate-800 pr-1">{userName}</span>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 pr-1">{userName}</span>
               </div>
             </div>
 

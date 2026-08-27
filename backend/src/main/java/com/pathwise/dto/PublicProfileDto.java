@@ -17,6 +17,7 @@ public class PublicProfileDto {
     private String username;
     private String displayName;
     private String email;
+    private String avatarUrl;
     private String targetRole;
     private String bio;
     private int currentStreakDays;
