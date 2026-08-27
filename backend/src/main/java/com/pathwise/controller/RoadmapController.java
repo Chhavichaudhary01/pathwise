@@ -37,6 +37,7 @@ public class RoadmapController {
     private final AiProvider aiProvider;
     private final RoadmapTemplateService roadmapTemplateService;
     private final RoadmapScraperService roadmapScraperService;
+    private final com.pathwise.service.StreakService streakService;
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -200,6 +201,14 @@ public class RoadmapController {
                 .map(item -> {
                     item.setStatus(targetStatus);
                     roadmapItemRepository.save(item);
+                    if ("COMPLETED".equalsIgnoreCase(targetStatus)) {
+                        try {
+                            UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                            streakService.recordActivity(userDetails.getId());
+                        } catch (Exception e) {
+                            log.debug("Streak update skipped: {}", e.getMessage());
+                        }
+                    }
                     return ResponseEntity.ok(Map.of("status", "updated", "itemId", itemId, "newStatus", targetStatus));
                 })
                 .orElse(ResponseEntity.notFound().build());

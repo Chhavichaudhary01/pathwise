@@ -23,6 +23,7 @@ import {
   UserCheck,
   BookOpen,
   FileText,
+  Flame,
   Calendar
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -357,8 +358,18 @@ export default function AppLayout() {
             </div>
 
             {/* Action Buttons & Profile */}
-            <div className="flex items-center gap-3 self-end sm:self-auto">
+            <div className="flex items-center gap-2.5 self-end sm:self-auto">
               <ThemeToggle />
+
+              {/* Streak Badge */}
+              <button
+                onClick={() => navigate('/settings')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 font-extrabold text-xs shadow-2xs hover:scale-105 transition-transform cursor-pointer"
+                title={`Active Study Streak: ${profile?.streakCount || 1} Days (Max: ${profile?.longestStreak || 1} Days)`}
+              >
+                <Flame className="w-3.5 h-3.5 fill-amber-500 text-amber-500 animate-pulse" />
+                <span>{profile?.streakCount || 1}d</span>
+              </button>
 
               <button
                 onClick={() => setCreateRoadmapModalOpen(true)}
