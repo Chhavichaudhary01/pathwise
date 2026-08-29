@@ -30,10 +30,22 @@ module.exports = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.8" },
         },
+        "shine": {
+          "0%": {
+            "background-position": "0% 0%",
+          },
+          "50%": {
+            "background-position": "100% 100%",
+          },
+          "to": {
+            "background-position": "0% 0%",
+          },
+        },
       },
       animation: {
         "border-beam": "border-beam calc(var(--duration)*1s) infinite linear",
         "pulse-subtle": "pulse-subtle 3s ease-in-out infinite",
+        "shine": "shine var(--duration) infinite linear",
       },
       colors: {
         border: "hsl(var(--border))",
