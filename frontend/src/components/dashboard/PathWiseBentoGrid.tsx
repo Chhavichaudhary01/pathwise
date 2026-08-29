@@ -212,10 +212,13 @@ export const PathWiseBentoGrid: React.FC<PathWiseBentoGridProps> = ({
         {/* CARD 2 (Span 1 col): AI Resume Score with Radial Meter */}
         {/* ========================================================================= */}
         <SpotlightCard
-          className="flex flex-col justify-between space-y-4"
+          className="relative flex flex-col justify-between space-y-4 overflow-hidden"
           spotlightColor="rgba(6, 182, 212, 0.18)"
           borderColor="rgba(6, 182, 212, 0.45)"
         >
+          {/* Subtle Border Beam */}
+          <BorderBeam size={160} duration={10} colorFrom="#06B6D4" colorTo="#10B981" />
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="p-1.5 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">

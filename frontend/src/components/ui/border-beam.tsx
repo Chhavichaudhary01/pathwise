@@ -15,7 +15,7 @@ export interface BorderBeamProps {
 export const BorderBeam: React.FC<BorderBeamProps> = ({
   className,
   size = 200,
-  duration = 8,
+  duration = 12,
   anchor = 90,
   borderWidth = 1.5,
   colorFrom = "#5051F9",

@@ -5,19 +5,31 @@ import { cn } from '@/lib/utils';
 export interface SpotlightCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   className?: string;
+  glowColor?: string;
   spotlightColor?: string;
   borderColor?: string;
+  spotlightRadius?: number;
   radius?: number;
 }
 
 export const SpotlightCard: React.FC<SpotlightCardProps> = ({
   children,
   className,
-  spotlightColor = 'rgba(99, 102, 241, 0.15)', // Default Indigo
-  borderColor = 'rgba(99, 102, 241, 0.4)',
+  glowColor,
+  spotlightColor = 'rgba(99, 102, 241, 0.15)',
+  borderColor,
+  spotlightRadius,
   radius = 450,
   ...props
 }) => {
+  const activeGlow = glowColor || spotlightColor;
+  const activeRadius = spotlightRadius || radius;
+  const activeBorder = borderColor || (
+    glowColor 
+      ? glowColor.replace(/[\d\.]+\)$/, '0.45)') 
+      : 'rgba(99, 102, 241, 0.4)'
+  );
+
   const mouseX = useMotionValue(-1000);
   const mouseY = useMotionValue(-1000);
 
@@ -51,8 +63,8 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
         style={{
           background: useMotionTemplate`
             radial-gradient(
-              ${radius}px circle at ${mouseX}px ${mouseY}px,
-              ${spotlightColor},
+              ${activeRadius}px circle at ${mouseX}px ${mouseY}px,
+              ${activeGlow},
               transparent 80%
             )
           `,
@@ -65,8 +77,8 @@ export const SpotlightCard: React.FC<SpotlightCardProps> = ({
         style={{
           background: useMotionTemplate`
             radial-gradient(
-              ${radius * 0.6}px circle at ${mouseX}px ${mouseY}px,
-              ${borderColor},
+              ${activeRadius * 0.6}px circle at ${mouseX}px ${mouseY}px,
+              ${activeBorder},
               transparent 70%
             )
           `,
