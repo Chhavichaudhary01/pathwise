@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import api from '@/lib/api';
+import PathWiseBentoGrid from '@/components/dashboard/PathWiseBentoGrid';
+import ProofOfSkillModal from '@/components/sandbox/ProofOfSkillModal';
 
 export default function Dashboard() {
   const { user } = useAuthStore();
@@ -21,6 +23,12 @@ export default function Dashboard() {
   const [roadmaps, setRoadmaps] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+
+  // AI Proof-of-Skill Sandbox modal state
+  const [sandboxOpen, setSandboxOpen] = useState(false);
+  const [sandboxSkill, setSandboxSkill] = useState('');
+  const [sandboxTopic, setSandboxTopic] = useState('');
+  const [sandboxItemId, setSandboxItemId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -317,6 +325,20 @@ export default function Dashboard() {
 
       </div>
 
+      {/* PATHWISE ASYMMETRIC BENTO GRID (21st.dev Component Pattern) */}
+      <PathWiseBentoGrid
+        streakDays={14}
+        studyHoursTotal={Math.round(totalItems * 4.5)}
+        resumeScore={84}
+        activeRoadmap={roadmaps[0]}
+        onOpenSandbox={(skill) => {
+          setSandboxSkill(skill.title);
+          setSandboxTopic(skill.title);
+          setSandboxItemId(skill.id || null);
+          setSandboxOpen(true);
+        }}
+      />
+
       {/* MAIN 2-COLUMN SECTION: ACTIVE ROADMAPS & SKILL COMPETENCIES */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -480,6 +502,19 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* AI Proof-of-Skill Sandbox Modal */}
+      <ProofOfSkillModal
+        isOpen={sandboxOpen}
+        onClose={() => setSandboxOpen(false)}
+        skillName={sandboxSkill}
+        topicTitle={sandboxTopic}
+        roadmapItemId={sandboxItemId || undefined}
+        onSuccess={() => {
+          setSandboxOpen(false);
+          fetchData();
+        }}
+      />
 
     </div>
   );
