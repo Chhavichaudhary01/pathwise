@@ -61,6 +61,7 @@ function App() {
           <Route path="/resume" element={<ResumeAnalyzerView />} />
           <Route path="/resources" element={<ResourceFinder />} />
           <Route path="/skill-graph" element={<SkillGraphView />} />
+          <Route path="/graph" element={<SkillGraphView />} />
           <Route path="/portfolio" element={<PortfolioView />} />
           <Route path="/chat" element={<ChatView />} />
           <Route path="/settings" element={<SettingsView />} />

@@ -757,7 +757,20 @@ export default function RoadmapView() {
         </div>
 
         {/* Right: Interactive React Flow DAG Graph (5 cols, sticky) */}
-        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-6">
+        <div className="lg:col-span-5 space-y-3 lg:sticky lg:top-6">
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
+              <Sparkles className="w-3.5 h-3.5 text-[#5051F9]" />
+              <span>Prerequisite DAG & Animated Beams</span>
+            </div>
+            <button
+              onClick={() => navigate('/skill-graph')}
+              className="text-[11px] font-extrabold text-[#5051F9] dark:text-indigo-400 hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>⚡ Full Tree View</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
           <RoadmapInteractiveGraph 
             roadmapTitle={roadmap?.title}
             milestones={roadmap?.milestones}
