@@ -35,7 +35,11 @@ export default function Register() {
       }
     } catch (err: any) {
       console.error('Google registration error:', err);
-      if (err.message?.includes('api-key-not-valid') || err.message?.includes('invalid-api-key')) {
+      if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+        setError('Unauthorized Domain: Please add your deployed domain to Firebase Console -> Authentication -> Settings -> Authorized Domains. You can also register with standard email below!');
+      } else if (err.code === 'auth/popup-closed-by-user' || err.message?.includes('popup-closed-by-user')) {
+        setError('Google sign-in popup was closed before completion. Please try again.');
+      } else if (err.message?.includes('api-key-not-valid') || err.message?.includes('invalid-api-key')) {
         setError('Firebase API Key missing: Please add your Firebase credentials to frontend/.env (see frontend/.env.example). You can also register with standard email below!');
       } else {
         setError(err.message || 'Google Sign-Up failed. Please try again.');
