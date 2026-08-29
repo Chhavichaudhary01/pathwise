@@ -111,8 +111,8 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
     const graphNodes: Node<SkillNodeData>[] = [];
     const graphEdges: Edge[] = [];
 
-    const columnSpacing = 320;
-    const rowSpacing = 140;
+    const columnSpacing = 270;
+    const rowSpacing = 110;
 
     let previousPhaseNodes: string[] = [];
 
@@ -173,8 +173,8 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
         };
 
         // Layout positioning
-        const xPos = mIdx * columnSpacing + 50;
-        const yPos = iIdx * rowSpacing + 80;
+        const xPos = mIdx * columnSpacing + 40;
+        const yPos = iIdx * rowSpacing + 60;
 
         const isHidden = activePhaseFilter !== 'ALL' && activePhaseFilter !== phaseNum;
 
@@ -202,9 +202,9 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
             },
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: isPrevDone ? '#10b981' : isInProgress ? '#6366f1' : '#475569',
-              width: 14,
-              height: 14,
+              color: isPrevDone ? '#10b981' : isInProgress ? '#06b6d4' : '#475569',
+              width: 10,
+              height: 10,
             },
           });
         }
@@ -227,8 +227,8 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
           markerEnd: {
             type: MarkerType.ArrowClosed,
             color: prevPhaseCompleted ? '#10b981' : '#334155',
-            width: 16,
-            height: 16,
+            width: 11,
+            height: 11,
           },
         });
       }

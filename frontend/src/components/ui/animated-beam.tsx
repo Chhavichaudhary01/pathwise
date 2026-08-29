@@ -162,7 +162,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
         d={pathD}
         stroke={pathColor !== "currentColor" ? pathColor : baseTrackColor}
         strokeWidth={pathWidth}
-        strokeOpacity={isLocked ? 0.25 : pathOpacity}
+        strokeOpacity={isLocked ? 0.2 : pathOpacity}
         strokeDasharray={isLocked ? "4,4" : undefined}
         strokeLinecap="round"
       />
@@ -171,7 +171,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
       {!isLocked && (
         <path
           d={pathD}
-          strokeWidth={effectiveStatus === 'COMPLETED' ? pathWidth + 1 : pathWidth}
+          strokeWidth={pathWidth}
           stroke={`url(#${id})`}
           strokeOpacity="1"
           strokeLinecap="round"
