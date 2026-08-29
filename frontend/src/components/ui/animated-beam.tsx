@@ -22,7 +22,8 @@ export interface AnimatedBeamProps {
   startYOffset?: number;
   endXOffset?: number;
   endYOffset?: number;
-  status?: 'COMPLETED' | 'IN_PROGRESS' | 'LOCKED';
+  status?: 'COMPLETED' | 'IN_PROGRESS' | 'LOCKED' | 'NOT_STARTED';
+  isActive?: boolean;
 }
 
 export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
@@ -36,7 +37,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
   delay = 0,
   pathColor = "currentColor",
   pathWidth = 2,
-  pathOpacity = 0.2,
+  pathOpacity = 0.25,
   gradientStartColor,
   gradientStopColor,
   repeat = Infinity,
@@ -46,24 +47,31 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
   endXOffset = 0,
   endYOffset = 0,
   status = 'IN_PROGRESS',
+  isActive = true,
 }) => {
   const id = useId();
   const [pathD, setPathD] = useState("");
   const [svgDimensions, setSvgDimensions] = useState({ width: 0, height: 0 });
 
-  // Intelligent preset styling based on PathWise status
+  const effectiveStatus = !isActive 
+    ? 'LOCKED' 
+    : status === 'NOT_STARTED' 
+    ? 'IN_PROGRESS' 
+    : status;
+
+  // Preset glowing colors based on state
   const startColor = gradientStartColor || (
-    status === 'COMPLETED' ? '#10B981' : status === 'IN_PROGRESS' ? '#6366F1' : '#475569'
+    effectiveStatus === 'COMPLETED' ? '#10B981' : effectiveStatus === 'IN_PROGRESS' ? '#06B6D4' : '#475569'
   );
 
   const stopColor = gradientStopColor || (
-    status === 'COMPLETED' ? '#06B6D4' : status === 'IN_PROGRESS' ? '#A855F7' : '#334155'
+    effectiveStatus === 'COMPLETED' ? '#06B6D4' : effectiveStatus === 'IN_PROGRESS' ? '#6366F1' : '#334155'
   );
 
-  const baseTrackColor = status === 'COMPLETED' 
-    ? 'rgba(16, 185, 129, 0.25)' 
-    : status === 'IN_PROGRESS' 
-    ? 'rgba(99, 102, 241, 0.25)' 
+  const baseTrackColor = effectiveStatus === 'COMPLETED' 
+    ? 'rgba(16, 185, 129, 0.3)' 
+    : effectiveStatus === 'IN_PROGRESS' 
+    ? 'rgba(6, 182, 212, 0.3)' 
     : 'rgba(51, 65, 85, 0.2)';
 
   const gradientCoordinates = reverse
@@ -108,6 +116,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
       }
     };
 
+    // Observe container for resize
     const resizeObserver = new ResizeObserver(() => {
       updatePath();
     });
@@ -116,10 +125,12 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
       resizeObserver.observe(containerRef.current);
     }
 
+    window.addEventListener("resize", updatePath);
     updatePath();
 
     return () => {
       resizeObserver.disconnect();
+      window.removeEventListener("resize", updatePath);
     };
   }, [
     containerRef,
@@ -132,7 +143,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
     endYOffset,
   ]);
 
-  const isLocked = status === 'LOCKED';
+  const isLocked = effectiveStatus === 'LOCKED';
 
   return (
     <svg
@@ -141,7 +152,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
       height={svgDimensions.height}
       xmlns="http://www.w3.org/2000/svg"
       className={cn(
-        "pointer-events-none absolute top-0 left-0 transform-gpu stroke-2",
+        "pointer-events-none absolute top-0 left-0 transform-gpu stroke-2 z-0",
         className
       )}
       viewBox={`0 0 ${svgDimensions.width} ${svgDimensions.height}`}
@@ -151,7 +162,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
         d={pathD}
         stroke={pathColor !== "currentColor" ? pathColor : baseTrackColor}
         strokeWidth={pathWidth}
-        strokeOpacity={isLocked ? 0.3 : pathOpacity}
+        strokeOpacity={isLocked ? 0.25 : pathOpacity}
         strokeDasharray={isLocked ? "4,4" : undefined}
         strokeLinecap="round"
       />
@@ -160,7 +171,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
       {!isLocked && (
         <path
           d={pathD}
-          strokeWidth={status === 'COMPLETED' ? pathWidth + 1 : pathWidth}
+          strokeWidth={effectiveStatus === 'COMPLETED' ? pathWidth + 1 : pathWidth}
           stroke={`url(#${id})`}
           strokeOpacity="1"
           strokeLinecap="round"
