@@ -246,30 +246,33 @@ export default function AnimatedBeamSkillTree({
                         
                         {/* Connecting Animated Beam to Next Node (if any) */}
                         {nodeIdx < nodes.length - 1 && (
-                          <div className="absolute left-6 top-full h-4 w-0.5 -translate-x-1/2 z-0 overflow-hidden">
+                          <div className="absolute left-7 top-full h-4 w-1 -translate-x-1/2 z-0 overflow-hidden">
                             <div 
-                              className={`w-full h-full ${
+                              className={`w-full h-full transition-all duration-700 ${
                                 isCompleted 
-                                  ? 'bg-gradient-to-b from-emerald-500 to-teal-400 shadow-[0_0_8px_#10b981]' 
+                                  ? 'bg-gradient-to-b from-emerald-400 to-teal-400 shadow-[0_0_12px_#10b981]' 
                                   : isInProgress 
-                                  ? 'bg-gradient-to-b from-indigo-500 to-purple-500 animate-pulse' 
+                                  ? 'bg-gradient-to-b from-indigo-500 via-purple-400 to-indigo-500 animate-pulse' 
                                   : 'bg-slate-800'
                               }`}
                             />
+                            {(isCompleted || isInProgress) && (
+                              <div className="absolute inset-0 bg-white/80 rounded-full animate-ping opacity-60 pointer-events-none" />
+                            )}
                           </div>
                         )}
 
-                        {/* Node Card */}
+                        {/* Node Card with Fluid Glow Transition */}
                         <div
                           onClick={() => setSelectedSkillId(node.id)}
                           className={`
-                            relative z-10 p-4 rounded-2xl border transition-all duration-300 backdrop-blur-xl cursor-pointer
+                            relative z-10 p-4 rounded-2xl border transition-all duration-500 backdrop-blur-xl cursor-pointer
                             ${isCompleted
-                              ? 'bg-gradient-to-br from-emerald-950/80 via-slate-900/90 to-slate-950/80 border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.25)]'
+                              ? 'bg-gradient-to-br from-emerald-950/90 via-slate-900/95 to-slate-950/90 border-emerald-500/80 shadow-[0_0_25px_rgba(16,185,129,0.35)] animate-in zoom-in-98 duration-300'
                               : isInProgress
-                              ? 'bg-gradient-to-br from-indigo-950/80 via-slate-900/90 to-purple-950/80 border-indigo-500/70 shadow-[0_0_25px_rgba(99,102,241,0.35)] ring-1 ring-indigo-400/40'
+                              ? 'bg-gradient-to-br from-indigo-950/90 via-slate-900/95 to-purple-950/90 border-indigo-500/80 shadow-[0_0_30px_rgba(99,102,241,0.45)] ring-1 ring-indigo-400/50 animate-pulse-subtle'
                               : 'bg-slate-900/70 border-slate-800/80 hover:border-slate-700 opacity-75'}
-                            ${isSelected ? 'ring-2 ring-cyan-400 scale-[1.02] shadow-[0_0_30px_rgba(6,182,212,0.5)]' : 'hover:scale-[1.01]'}
+                            ${isSelected ? 'ring-2 ring-cyan-400 scale-[1.02] shadow-[0_0_35px_rgba(6,182,212,0.6)]' : 'hover:scale-[1.01]'}
                           `}
                         >
                           {/* Top Row: Type & Status */}

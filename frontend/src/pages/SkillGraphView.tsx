@@ -24,9 +24,11 @@ export default function SkillGraphView() {
   const [sandboxTopic, setSandboxTopic] = useState('');
   const [sandboxItemId, setSandboxItemId] = useState<string | null>(null);
 
-  const fetchRoadmaps = async () => {
+  const fetchRoadmaps = async (initialLoad = false) => {
     try {
-      setLoading(true);
+      if (initialLoad) {
+        setLoading(true);
+      }
       const res = await api.get('/roadmaps');
       const roadmaps = res.data || [];
       if (roadmaps.length > 0) {
@@ -35,20 +37,39 @@ export default function SkillGraphView() {
     } catch (err) {
       console.error('Failed to load roadmaps for skill graph:', err);
     } finally {
-      setLoading(false);
+      if (initialLoad) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchRoadmaps();
+    fetchRoadmaps(true);
   }, []);
 
   const handleItemStatusChange = async (itemId: string, _currentStatus: string, newStatus: string) => {
+    // 1. Optimistic UI update for instantaneous fluid animation
+    setActiveRoadmap((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        milestones: prev.milestones?.map((m: any) => ({
+          ...m,
+          items: m.items?.map((item: any) => 
+            item.id === itemId ? { ...item, status: newStatus } : item
+          )
+        }))
+      };
+    });
+
     try {
+      // 2. Persist to backend silently
       await api.patch(`/roadmaps/items/${itemId}/status`, { status: newStatus });
-      fetchRoadmaps();
+      // 3. Silent sync without re-triggering loading state
+      fetchRoadmaps(false);
     } catch (err) {
       console.error('Failed to update skill status:', err);
+      fetchRoadmaps(false);
     }
   };
 
