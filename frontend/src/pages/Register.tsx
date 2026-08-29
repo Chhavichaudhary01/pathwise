@@ -58,10 +58,16 @@ export default function Register() {
       navigate('/onboarding', { replace: true });
     } catch (err: any) {
       console.error('Registration error:', err);
-      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        setError('Server request timed out. Please try again in a moment.');
+      if (err.userFriendlyMessage) {
+        setError(err.userFriendlyMessage);
+      } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('Server request timed out. If using Render free tier, the server may be waking up (~30s). Please try again.');
       } else {
-        setError(err.response?.data?.message || 'Registration failed. Please check credentials or backend status.');
+        setError(
+          err.response?.data?.message || 
+          err.message || 
+          'Registration failed. Please verify that your backend server is reachable and database is connected.'
+        );
       }
     } finally {
       setLoading(false);

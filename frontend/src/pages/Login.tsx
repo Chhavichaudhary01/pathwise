@@ -55,14 +55,17 @@ export default function Login() {
       navigate('/dashboard', { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
-      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        setError('Server request timed out. Please try again in a moment.');
+      if (err.userFriendlyMessage) {
+        setError(err.userFriendlyMessage);
+      } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('Server request timed out. If using Render free tier, the server may be waking up (~30s). Please try again.');
+      } else if (err.response?.status === 401) {
+        setError('Invalid email or password. If you haven’t registered yet, please click "Create an account" below.');
       } else {
         setError(
           err.response?.data?.message || 
-          (err.response?.status === 401 
-            ? 'Invalid email or password. If you haven’t registered yet, please click "Create an account" below.' 
-            : 'Unable to connect to server. Please check your network or server status.')
+          err.message ||
+          'Unable to connect to server. Please check that your backend is running and reachable.'
         );
       }
     } finally {
