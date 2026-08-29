@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import ThemeToggle from '@/components/ThemeToggle';
 import SpotlightHero from '@/components/ui/spotlight-hero';
+import { BackgroundBeams } from '@/components/ui/background-beams';
 import api from '@/lib/api';
 
 interface LandingData {
@@ -29,7 +30,7 @@ export default function Landing() {
       .catch(() => {
         setMeta({
           appName: 'PathWise',
-          tagline: 'AI-Powered Personalized Career & Learning Path Recommender',
+          tagline: "Tell us where you want to go. We'll generate a personalized, prerequisite-resolved roadmap to get you there—step by step.",
           aiEngine: 'Google Gemini 1.5 Flash',
           database: 'Neon PostgreSQL',
           totalCatalogItems: 60,
@@ -54,11 +55,11 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 select-none">
+    <BackgroundBeams className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 select-none">
       <div className="max-w-5xl w-full text-center space-y-6">
         
-        {/* Top User Bar */}
-        <div className="flex justify-between items-center bg-slate-900/80 backdrop-blur-md border border-slate-800 px-5 py-2.5 rounded-full shadow-lg max-w-xl mx-auto text-xs">
+        {/* Top User Navigation Bar */}
+        <div className="flex justify-between items-center bg-slate-900/80 backdrop-blur-md border border-slate-800 px-5 py-2.5 rounded-full shadow-lg max-w-xl mx-auto text-xs relative z-20">
           {isAuthenticated && user ? (
             <>
               <div className="flex items-center gap-2">
@@ -105,7 +106,7 @@ export default function Landing() {
         />
 
         {/* Platform Capability Highlights */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left relative z-10">
           <Card className="bg-slate-900/60 border-slate-800/80 backdrop-blur-md shadow-sm">
             <CardContent className="p-5 space-y-1.5">
               <span className="text-xl">🕸️</span>
@@ -139,7 +140,7 @@ export default function Landing() {
 
         {/* Available Career Tracks */}
         {meta?.tracks && (
-          <div className="pt-2 text-xs text-slate-400 space-y-2">
+          <div className="pt-2 text-xs text-slate-400 space-y-2 relative z-10">
             <p className="font-medium text-slate-300">Supported Target Career Tracks:</p>
             <div className="flex flex-wrap gap-2 justify-center">
               {meta.tracks.map((t, idx) => (
@@ -155,6 +156,6 @@ export default function Landing() {
         )}
 
       </div>
-    </div>
+    </BackgroundBeams>
   );
 }
