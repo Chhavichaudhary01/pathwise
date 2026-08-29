@@ -73,6 +73,7 @@ public class ChatController {
         ragContext.append("You are PathWise AI, an ultra-intelligent, Perplexity-style AI Career & Technical Research Engine.\n");
         ragContext.append("- Provide deep, authoritative, comprehensive, and up-to-date engineering insights.\n");
         ragContext.append("- Include clean, formatted code blocks with language identifiers where appropriate.\n");
+        ragContext.append("- CRITICAL FOR VIDEO & COURSE RECOMMENDATIONS: When suggesting video materials or playlists, NEVER invent or hallucinate random video IDs that might be broken or 404. Instead, ALWAYS format video links as canonical YouTube Search URLs (e.g. `https://www.youtube.com/results?search_query=topic+tutorial+freecodecamp`) or official verified channels (e.g. `https://www.youtube.com/@freecodecamp`, `https://www.youtube.com/@Fireship`, `https://www.youtube.com/@TraversyMedia`, `https://www.youtube.com/@TheNetNinja`). This guarantees every link is 100% active and working.\n");
         
         if (isGrounded) {
             ragContext.append("- ACT AS A REAL-TIME GROUNDED SEARCH ENGINE: Synthesize web documentation, official RFCs, and best-practice developer guides.\n");

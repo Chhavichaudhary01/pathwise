@@ -96,6 +96,17 @@ public class RoadmapController {
             profile = profileRepository.save(profile);
         }
 
+        // 0. Deduplication Check: If user already has an active roadmap for this goal, reuse it
+        String targetGoal = profile.getGoal();
+        List<Roadmap> existingRoadmaps = roadmapRepository.findByUserId(user.getId());
+        for (Roadmap r : existingRoadmaps) {
+            if (r.getTitle() != null && r.getTitle().equalsIgnoreCase(targetGoal) && r.getMilestones() != null && !r.getMilestones().isEmpty()) {
+                r.setStatus("ACTIVE");
+                roadmapRepository.save(r);
+                return ResponseEntity.ok(toResponseDto(r));
+            }
+        }
+
         // 1. Check for Best-Case Match in Curated Catalog (60+ Roadmaps)
         Optional<RoadmapTemplateDto> templateMatch = roadmapTemplateService.findBestMatch(profile.getGoal(), profile.getCurrentSkills());
         if (templateMatch.isPresent()) {
@@ -271,6 +282,126 @@ public class RoadmapController {
                 "title", "Milestone Mastery Check",
                 "questions", questions
         ));
+    }
+
+    @DeleteMapping("/{id:[0-9a-fA-F\\-]{36}}")
+    @Transactional
+    public ResponseEntity<?> deleteRoadmap(@PathVariable UUID id) {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return roadmapRepository.findById(id)
+                .map(r -> {
+                    if (!r.getUser().getId().equals(userDetails.getId())) {
+                        return ResponseEntity.status(403).body(Map.of("message", "Unauthorized to delete this roadmap"));
+                    }
+                    roadmapRepository.delete(r);
+                    return ResponseEntity.ok(Map.of("status", "deleted", "id", id));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id:[0-9a-fA-F\\-]{36}}/mastery-quiz")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> getRoadmapMasteryQuiz(@PathVariable UUID id) {
+        return roadmapRepository.findByIdWithDetails(id)
+                .map(roadmap -> {
+                    String title = roadmap.getTitle() != null ? roadmap.getTitle() : "Software Engineering";
+                    List<Map<String, Object>> questions = generateMasteryQuizQuestions(title);
+
+                    return ResponseEntity.ok(Map.of(
+                            "roadmapId", id,
+                            "roadmapTitle", title,
+                            "quizTitle", "🎓 " + title + " Comprehensive Certification Quiz",
+                            "description", "Verify your end-to-end mastery across all milestones in " + title + " to earn your Mastery Certificate Badge.",
+                            "questions", questions
+                    ));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    private List<Map<String, Object>> generateMasteryQuizQuestions(String roadmapTitle) {
+        String lower = roadmapTitle.toLowerCase();
+        
+        if (lower.contains("react") || lower.contains("front")) {
+            return List.of(
+                    Map.of(
+                            "id", 1,
+                            "question", "What is the primary difference between React state and props?",
+                            "options", List.of("Props are internal and mutable; state is passed down from parents", "Props are read-only external inputs; state is component-managed mutable data", "Props require Redux; state only works in class components", "There is no difference in React 19"),
+                            "correctIndex", 1,
+                            "explanation", "Props are passed down to child components and are immutable to the child, while state is owned and updated by the component itself."
+                    ),
+                    Map.of(
+                            "id", 2,
+                            "question", "Why should keys passed to list elements in React be stable and unique rather than array indices?",
+                            "options", List.of("To improve CSS styling specificity", "To prevent unnecessary re-rendering and identity reconciliation bugs during item reordering or deletion", "Keys are required by the browser DOM engine", "To enable GPU acceleration"),
+                            "correctIndex", 1,
+                            "explanation", "Using array indices as keys causes React's reconciliation algorithm to improperly reuse component state when list order changes."
+                    ),
+                    Map.of(
+                            "id", 3,
+                            "question", "What is the primary advantage of modern CSS Grid over traditional float-based layouts?",
+                            "options", List.of("Grid provides true two-dimensional (rows and columns) layout control without clearing hacks", "Grid requires JavaScript to execute", "Grid only works on desktop monitors", "Grid disables CSS specificity"),
+                            "correctIndex", 0,
+                            "explanation", "CSS Grid allows precise alignment across both horizontal rows and vertical columns simultaneously."
+                    ),
+                    Map.of(
+                            "id", 4,
+                            "question", "In TypeScript, what is the key benefit of using 'unknown' over 'any'?",
+                            "options", List.of("unknown disables the type checker completely", "unknown forces type narrowing before performing operations, preventing runtime exceptions", "unknown makes variables immutable", "unknown automatically converts types to strings"),
+                            "correctIndex", 1,
+                            "explanation", "unknown is the type-safe counterpart of any. You cannot access properties on an unknown value without explicit type checking or assertions."
+                    )
+            );
+        } else if (lower.contains("devops") || lower.contains("cloud") || lower.contains("docker")) {
+            return List.of(
+                    Map.of(
+                            "id", 1,
+                            "question", "What is the primary advantage of multi-stage Docker builds?",
+                            "options", List.of("They allow running multiple operating systems simultaneously", "They separate build-time dependencies from the runtime image, drastically reducing final container size and attack surface", "They eliminate the need for container registries", "They speed up network requests"),
+                            "correctIndex", 1,
+                            "explanation", "Multi-stage builds copy only compiled artifacts into minimal production base images (like alpine or distroless), keeping images small and secure."
+                    ),
+                    Map.of(
+                            "id", 2,
+                            "question", "In Kubernetes architecture, what role does the Kubelet play?",
+                            "options", List.of("It is the distributed key-value database", "It is the node agent that ensures containers described in PodSpecs are running and healthy on that specific node", "It balances ingress internet traffic across clusters", "It compiles Go source code"),
+                            "correctIndex", 1,
+                            "explanation", "The Kubelet runs on each worker node and communicates with the control plane (API server) to manage pod lifecycle on that node."
+                    ),
+                    Map.of(
+                            "id", 3,
+                            "question", "What is the core principle of Infrastructure as Code (IaC) with tools like Terraform?",
+                            "options", List.of("Manually configuring servers via SSH commands", "Declaring infrastructure state in version-controlled configuration files for repeatable, automated provisioning", "Writing server backends in Python", "Disabling cloud security rules"),
+                            "correctIndex", 1,
+                            "explanation", "IaC enables programmatic, declarative, and version-controlled cloud resource management."
+                    )
+            );
+        }
+
+        // Generic Full Stack / Backend fallback
+        return List.of(
+                Map.of(
+                        "id", 1,
+                        "question", "In relational databases (SQL), what does an INDEX primarily optimize?",
+                        "options", List.of("Data insertion speed", "Query lookup and filtering performance at the cost of slight write overhead", "Database disk encryption", "Network bandwidth compression"),
+                        "correctIndex", 1,
+                        "explanation", "Indexes create B-Tree/Hash structures that allow O(log n) lookups instead of full table scans (O(n))."
+                ),
+                Map.of(
+                        "id", 2,
+                        "question", "What does the ACID principle guarantee in database transactions?",
+                        "options", List.of("Atomicity, Consistency, Isolation, and Durability", "Asynchronous, Cached, Indexed, and Distributed", "Automated Cloud Infrastructure Deployment", "Authentication, Cookies, Identity, and DNS"),
+                        "correctIndex", 0,
+                        "explanation", "ACID guarantees that database transactions are processed reliably even in the event of power failures or crashes."
+                ),
+                Map.of(
+                        "id", 3,
+                        "question", "Why is statelessness an essential design principle for scalable REST APIs?",
+                        "options", List.of("It prevents using databases", "It allows any server instance behind a load balancer to handle any incoming request without sharing session state", "It disables HTTPS encryption", "It forces users to log in on every HTTP request"),
+                        "correctIndex", 1,
+                        "explanation", "Stateless services allow effortless horizontal scaling because requests contain all required auth tokens/context."
+                )
+        );
     }
 
     private RoadmapResponse toSummaryDto(Roadmap roadmap) {

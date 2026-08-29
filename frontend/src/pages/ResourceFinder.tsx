@@ -129,7 +129,7 @@ export default function ResourceFinder() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Type any skill (e.g. 'Docker Networking', 'React Server Actions', 'LangChain RAG', 'Spring Security')..."
-            className="w-full bg-white text-slate-800 placeholder-slate-400 rounded-full pl-12 pr-28 py-3.5 text-xs md:text-sm font-medium shadow-md focus:outline-none focus:ring-4 focus:ring-purple-300"
+            className="w-full bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder-slate-400 rounded-full pl-12 pr-32 py-3.5 text-xs md:text-sm font-medium shadow-md border border-slate-200/60 dark:border-slate-700 focus:outline-none focus:ring-4 focus:ring-purple-300 dark:focus:ring-indigo-500/30"
           />
           <button
             type="submit"
@@ -170,7 +170,7 @@ export default function ResourceFinder() {
                 px-4 py-2 rounded-full text-xs font-bold transition-all cursor-pointer
                 ${selectedFilter === tab 
                   ? 'bg-[#5051F9] text-white shadow-2xs' 
-                  : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80'}
+                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'}
               `}
             >
               {tab}
@@ -179,8 +179,8 @@ export default function ResourceFinder() {
         </div>
 
         {result && (
-          <div className="text-xs font-bold text-slate-500">
-            Showing <span className="text-[#5051F9] font-extrabold">{filteredResources.length}</span> curated materials for <span className="text-slate-800 font-extrabold">"{result.query}"</span>
+          <div className="text-xs font-bold text-slate-500 dark:text-slate-400">
+            Showing <span className="text-[#5051F9] dark:text-indigo-400 font-extrabold">{filteredResources.length}</span> curated materials for <span className="text-slate-800 dark:text-slate-200 font-extrabold">"{result.query}"</span>
           </div>
         )}
       </div>
@@ -217,17 +217,17 @@ export default function ResourceFinder() {
 
       {/* Scraped Resource Cards Grid */}
       {loading ? (
-        <div className="text-center py-20 space-y-3 bg-white rounded-3xl border border-slate-100 shadow-sm">
+        <div className="text-center py-20 space-y-3 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
           <div className="w-10 h-10 border-3 border-[#5051F9] border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-xs font-bold text-slate-600">Scraping Roadmap.sh & official documentation for "{activeQuery}"...</p>
+          <p className="text-xs font-bold text-slate-600 dark:text-slate-400">Scraping Roadmap.sh & official documentation for "{activeQuery}"...</p>
         </div>
       ) : filteredResources.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-3xl border border-slate-100 shadow-sm space-y-3">
+        <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-3">
           <BookOpen className="w-10 h-10 text-slate-300 mx-auto" />
-          <p className="text-sm font-bold text-slate-700">No resources found matching this filter.</p>
+          <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No resources found matching this filter.</p>
           <button
             onClick={() => setSelectedFilter('All')}
-            className="text-xs font-bold text-[#5051F9] hover:underline"
+            className="text-xs font-bold text-[#5051F9] dark:text-indigo-400 hover:underline cursor-pointer"
           >
             Reset Filters
           </button>
@@ -243,7 +243,7 @@ export default function ResourceFinder() {
             return (
               <div
                 key={idx}
-                className="bg-white rounded-3xl border border-slate-100 p-5 shadow-2xs hover:shadow-md hover:border-purple-200 transition-all flex flex-col justify-between space-y-4 group"
+                className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-5 shadow-2xs hover:shadow-md hover:border-purple-200 dark:hover:border-indigo-700 transition-all flex flex-col justify-between space-y-4 group text-left"
               >
                 <div className="space-y-3">
                   {/* Top Badge & Provider */}
@@ -252,12 +252,12 @@ export default function ResourceFinder() {
                       <span className={`
                         text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1
                         ${isDocs 
-                          ? 'bg-blue-100 text-blue-800' 
+                          ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300' 
                           : isProject 
-                          ? 'bg-amber-100 text-amber-800' 
+                          ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' 
                           : isVideo 
-                          ? 'bg-red-100 text-red-800' 
-                          : 'bg-purple-100 text-purple-800'}
+                          ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' 
+                          : 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300'}
                       `}>
                         {isDocs && <FileCode className="w-3 h-3" />}
                         {isProject && <FolderGit2 className="w-3 h-3" />}
@@ -267,33 +267,33 @@ export default function ResourceFinder() {
                       </span>
 
                       {item.isOfficial && (
-                        <span className="text-[10px] bg-emerald-100 text-emerald-800 font-extrabold px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-extrabold px-2 py-0.5 rounded-full">
                           ✓ Official
                         </span>
                       )}
                     </div>
 
-                    <span className="text-[10px] font-bold text-slate-400">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
                       {item.provider}
                     </span>
                   </div>
 
                   {/* Title & Description */}
                   <div>
-                    <h3 className="text-sm font-extrabold text-slate-900 group-hover:text-[#5051F9] transition-colors leading-snug">
+                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 group-hover:text-[#5051F9] dark:group-hover:text-indigo-400 transition-colors leading-snug">
                       {item.title}
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-3">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed line-clamp-3">
                       {item.description}
                     </p>
                   </div>
                 </div>
 
                 {/* Bottom Action Buttons */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
                   <button
                     onClick={() => handleCopy(item.url)}
-                    className="text-[11px] font-bold text-slate-400 hover:text-slate-700 flex items-center gap-1 cursor-pointer transition-colors"
+                    className="text-[11px] font-bold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     {copiedUrl === item.url ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedUrl === item.url ? 'Copied' : 'Copy Link'}</span>
@@ -302,7 +302,7 @@ export default function ResourceFinder() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => navigate('/chat')}
-                      className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-[#F8F9FD] text-slate-600 hover:text-[#5051F9] hover:bg-purple-50 transition-colors cursor-pointer"
+                      className="px-3 py-1.5 rounded-full text-[11px] font-bold bg-[#F8F9FD] dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#5051F9] dark:hover:text-indigo-300 hover:bg-purple-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
                     >
                       Ask AI Coach
                     </button>

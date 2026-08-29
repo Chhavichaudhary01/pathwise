@@ -147,16 +147,16 @@ export default function CareerPlannerView() {
       </div>
 
       {/* Hero Overview Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
         
         {/* Left Column: Interactive Pace Slider & Pacing Modes (5 cols) */}
-        <Card className="lg:col-span-5 border border-slate-200 shadow-sm bg-white rounded-3xl overflow-hidden flex flex-col justify-between">
-          <CardHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
-            <CardTitle className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+        <Card className="lg:col-span-5 border border-slate-200 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-3xl overflow-hidden flex flex-col justify-between">
+          <CardHeader className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+            <CardTitle className="text-base font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Clock className="w-4 h-4 text-[#5051F9]" />
               <span>Weekly Time Commitment</span>
             </CardTitle>
-            <CardDescription className="text-xs text-slate-500">
+            <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
               Adjust your study pace to instantly recalculate all milestone deadlines and target graduation.
             </CardDescription>
           </CardHeader>
@@ -164,21 +164,21 @@ export default function CareerPlannerView() {
           <CardContent className="p-6 space-y-6">
             
             {/* Big Hours Counter */}
-            <div className="text-center p-4 rounded-2xl bg-indigo-50/50 border border-purple-100 space-y-1">
-              <span className="text-4xl font-black text-[#5051F9] font-mono tracking-tight">
+            <div className="text-center p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/40 border border-purple-100 dark:border-indigo-800/50 space-y-1">
+              <span className="text-4xl font-black text-[#5051F9] dark:text-indigo-400 font-mono tracking-tight">
                 {weeklyHours}
               </span>
-              <span className="text-sm font-extrabold text-slate-700 block">
+              <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200 block">
                 Hours / Week Commitment
               </span>
-              <span className="text-[11px] text-slate-500">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
                 ~{(weeklyHours / 7).toFixed(1)} hrs/day average focus
               </span>
             </div>
 
             {/* Slider */}
             <div className="space-y-2">
-              <div className="flex justify-between text-xs font-bold text-slate-500">
+              <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
                 <span>3h/wk (Casual)</span>
                 <span>15h/wk (Focused)</span>
                 <span>40h/wk (Bootcamp)</span>
@@ -191,13 +191,13 @@ export default function CareerPlannerView() {
                 step="1"
                 value={weeklyHours}
                 onChange={(e) => handleSliderChange(parseInt(e.target.value))}
-                className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#5051F9]"
+                className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#5051F9]"
               />
             </div>
 
             {/* Study Distribution Selector */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 block uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block uppercase tracking-wider">
                 Preferred Study Routine
               </label>
               
@@ -213,8 +213,8 @@ export default function CareerPlannerView() {
                     onClick={() => setStudyPacing(item.id as any)}
                     className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                       studyPacing === item.id
-                        ? 'bg-purple-50 border-[#5051F9] text-[#5051F9] font-bold shadow-2xs'
-                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                        ? 'bg-purple-50 dark:bg-indigo-950/60 border-[#5051F9] text-[#5051F9] dark:text-indigo-300 font-bold shadow-2xs'
+                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                   >
                     <span className="text-xs block font-bold">{item.label}</span>
@@ -228,7 +228,7 @@ export default function CareerPlannerView() {
             <Button
               onClick={handleSaveCommitment}
               disabled={savingPace}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-2xl py-2.5 shadow-sm cursor-pointer"
+              className="w-full bg-slate-900 dark:bg-[#5051F9] hover:bg-slate-800 dark:hover:bg-indigo-700 text-white font-extrabold text-xs rounded-2xl py-2.5 shadow-sm cursor-pointer"
             >
               {saveSuccess ? '✓ Commitment Pace Saved!' : '💾 Save Target Commitment in Profile'}
             </Button>
@@ -240,7 +240,7 @@ export default function CareerPlannerView() {
         <div className="lg:col-span-7 space-y-6">
           
           {/* Graduation Target Banner */}
-          <Card className="border-none shadow-md bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 rounded-3xl relative overflow-hidden">
+          <Card className="border-none shadow-md bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 rounded-3xl relative overflow-hidden text-left">
             <div className="absolute right-0 top-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="space-y-4 relative z-10">
@@ -281,19 +281,19 @@ export default function CareerPlannerView() {
 
           {/* Quick Metrics Cards */}
           <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-0.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Total Study Hours</span>
-              <p className="text-xl font-black text-slate-900">{Math.round(timeline?.totalEstimatedHours || 45)}h</p>
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-0.5">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Total Study Hours</span>
+              <p className="text-xl font-black text-slate-900 dark:text-slate-100">{Math.round(timeline?.totalEstimatedHours || 45)}h</p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-0.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Hours Completed</span>
-              <p className="text-xl font-black text-emerald-600">{Math.round(timeline?.completedHours || 0)}h</p>
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-0.5">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Hours Completed</span>
+              <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">{Math.round(timeline?.completedHours || 0)}h</p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-0.5">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Hours Remaining</span>
-              <p className="text-xl font-black text-[#5051F9]">{Math.round(timeline?.remainingHours || 45)}h</p>
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs space-y-0.5">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">Hours Remaining</span>
+              <p className="text-xl font-black text-[#5051F9] dark:text-indigo-400">{Math.round(timeline?.remainingHours || 45)}h</p>
             </div>
           </div>
 
@@ -302,14 +302,14 @@ export default function CareerPlannerView() {
       </div>
 
       {/* Dynamic Milestone Target Timeline (Gantt Schedule) */}
-      <div className="space-y-4">
+      <div className="space-y-4 text-left">
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
               <Layers className="w-4 h-4 text-[#5051F9]" />
               <span>Calculated Milestone Target Dates</span>
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Each milestone target is sequenced chronologically based on prerequisite topological order.
             </p>
           </div>
@@ -318,7 +318,7 @@ export default function CareerPlannerView() {
             size="sm"
             onClick={() => setExportModalOpen(true)}
             variant="outline"
-            className="text-xs font-bold border-purple-200 text-[#5051F9] bg-purple-50 hover:bg-purple-100 rounded-full cursor-pointer"
+            className="text-xs font-bold border-purple-200 dark:border-indigo-800 text-[#5051F9] dark:text-indigo-400 bg-purple-50 dark:bg-indigo-950/60 hover:bg-purple-100 rounded-full cursor-pointer"
           >
             ⚡ Sync All to Calendar
           </Button>
@@ -335,24 +335,24 @@ export default function CareerPlannerView() {
                 key={m.milestoneId || idx}
                 className={`border rounded-3xl transition-all shadow-sm flex flex-col justify-between ${
                   isCompleted
-                    ? 'bg-emerald-50/40 border-emerald-200'
+                    ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800'
                     : isInProgress
-                    ? 'bg-purple-50/30 border-purple-200 ring-2 ring-[#5051F9]/30'
-                    : 'bg-white border-slate-200'
+                    ? 'bg-purple-50/30 dark:bg-indigo-950/30 border-purple-200 dark:border-indigo-800 ring-2 ring-[#5051F9]/30'
+                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
                 }`}
               >
-                <CardHeader className="p-5 border-b border-slate-100/80 space-y-2">
+                <CardHeader className="p-5 border-b border-slate-100/80 dark:border-slate-800 space-y-2">
                   <div className="flex justify-between items-start gap-2">
-                    <span className="text-[10px] font-mono font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                    <span className="text-[10px] font-mono font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                       Phase {m.orderIndex}
                     </span>
 
                     <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
                       isCompleted
-                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                        ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
                         : isInProgress
-                        ? 'bg-[#EDE9FE] text-[#5051F9] border-purple-300 animate-pulse'
-                        : 'bg-slate-100 text-slate-600 border-slate-200'
+                        ? 'bg-[#EDE9FE] dark:bg-indigo-950/60 text-[#5051F9] dark:text-indigo-300 border-purple-300 dark:border-indigo-700 animate-pulse'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
                     }`}>
                       {isCompleted ? '✓ Completed' : isInProgress ? '⚡ Active Phase' : 'Upcoming'}
                     </span>

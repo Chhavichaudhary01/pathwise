@@ -14,6 +14,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 
 import { SkillNode, type SkillNodeData } from './graph/SkillNode';
+import { AnimatedBeamEdge } from './graph/AnimatedBeamEdge';
 import { SkillDetailDrawer } from './graph/SkillDetailDrawer';
 import { 
   Maximize2, Minimize2, 
@@ -51,6 +52,10 @@ interface RoadmapInteractiveGraphProps {
 
 const nodeTypes = {
   skillNode: SkillNode,
+};
+
+const edgeTypes = {
+  animatedBeam: AnimatedBeamEdge,
 };
 
 export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = ({
@@ -106,8 +111,8 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
     const graphNodes: Node<SkillNodeData>[] = [];
     const graphEdges: Edge[] = [];
 
-    const columnSpacing = 320;
-    const rowSpacing = 140;
+    const columnSpacing = 270;
+    const rowSpacing = 110;
 
     let previousPhaseNodes: string[] = [];
 
@@ -168,8 +173,8 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
         };
 
         // Layout positioning
-        const xPos = mIdx * columnSpacing + 50;
-        const yPos = iIdx * rowSpacing + 80;
+        const xPos = mIdx * columnSpacing + 40;
+        const yPos = iIdx * rowSpacing + 60;
 
         const isHidden = activePhaseFilter !== 'ALL' && activePhaseFilter !== phaseNum;
 
@@ -181,7 +186,7 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
           hidden: isHidden,
         });
 
-        // Intra-phase sequential dependency edge
+        // Intra-phase sequential dependency edge with Animated Beam
         if (iIdx > 0) {
           const prevItem = items[iIdx - 1];
           const prevNodeId = prevItem.id || `node-${mIdx}-${iIdx - 1}`;
@@ -191,25 +196,21 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
             id: `edge-${prevNodeId}-${nodeId}`,
             source: prevNodeId,
             target: nodeId,
-            animated: isPrevDone,
-            type: 'smoothstep',
-            style: {
-              stroke: isPrevDone ? '#10b981' : isCompleted ? '#10b981' : isInProgress ? '#6366f1' : '#334155',
-              strokeWidth: isPrevDone ? 2.5 : 1.5,
-              strokeDasharray: isPrevDone ? undefined : '5,5',
-              filter: isPrevDone ? 'drop-shadow(0 0 6px rgba(16,185,129,0.7))' : undefined,
+            type: 'animatedBeam',
+            data: {
+              status: isPrevDone ? 'COMPLETED' : isInProgress ? 'IN_PROGRESS' : 'LOCKED',
             },
             markerEnd: {
               type: MarkerType.ArrowClosed,
-              color: isPrevDone ? '#10b981' : '#475569',
-              width: 14,
-              height: 14,
+              color: isPrevDone ? '#10b981' : isInProgress ? '#06b6d4' : '#475569',
+              width: 10,
+              height: 10,
             },
           });
         }
       });
 
-      // Inter-phase bridge edges (connect project start of next phase to previous phase outputs)
+      // Inter-phase bridge edges with Animated Light Beams
       if (previousPhaseNodes.length > 0 && currentPhaseNodes.length > 0) {
         const sourceBridgeNode = previousPhaseNodes[previousPhaseNodes.length - 1];
         const targetBridgeNode = currentPhaseNodes[0];
@@ -219,18 +220,15 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
           id: `bridge-${sourceBridgeNode}-${targetBridgeNode}`,
           source: sourceBridgeNode,
           target: targetBridgeNode,
-          animated: prevPhaseCompleted,
-          type: 'bezier',
-          style: {
-            stroke: prevPhaseCompleted ? '#a855f7' : '#1e293b',
-            strokeWidth: prevPhaseCompleted ? 3 : 1.5,
-            filter: prevPhaseCompleted ? 'drop-shadow(0 0 10px rgba(168,85,247,0.8))' : undefined,
+          type: 'animatedBeam',
+          data: {
+            status: prevPhaseCompleted ? 'COMPLETED' : 'LOCKED',
           },
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            color: prevPhaseCompleted ? '#a855f7' : '#334155',
-            width: 18,
-            height: 18,
+            color: prevPhaseCompleted ? '#10b981' : '#334155',
+            width: 11,
+            height: 11,
           },
         });
       }
@@ -349,6 +347,7 @@ export const RoadmapInteractiveGraph: React.FC<RoadmapInteractiveGraphProps> = (
           onEdgesChange={onEdgesChange}
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           fitView
           fitViewOptions={{ padding: 0.2 }}
           minZoom={0.2}

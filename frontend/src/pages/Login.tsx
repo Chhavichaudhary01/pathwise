@@ -35,7 +35,11 @@ export default function Login() {
       }
     } catch (err: any) {
       console.error('Google login error:', err);
-      if (err.message?.includes('api-key-not-valid') || err.message?.includes('invalid-api-key')) {
+      if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+        setError('Unauthorized Domain: Please add your deployed domain to Firebase Console -> Authentication -> Settings -> Authorized Domains. You can also use 1-Click Demo Login or Email login below!');
+      } else if (err.code === 'auth/popup-closed-by-user' || err.message?.includes('popup-closed-by-user')) {
+        setError('Google sign-in popup was closed before completion. Please try again.');
+      } else if (err.message?.includes('api-key-not-valid') || err.message?.includes('invalid-api-key')) {
         setError('Firebase API Key missing: Please add your Firebase credentials to frontend/.env (see frontend/.env.example). You can also use standard email login or 1-Click Demo Login below!');
       } else {
         setError(err.message || 'Google Sign-In failed. Please try again.');
@@ -55,14 +59,17 @@ export default function Login() {
       navigate('/dashboard', { replace: true });
     } catch (err: any) {
       console.error('Login error:', err);
-      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        setError('Server request timed out. Please try again in a moment.');
+      if (err.userFriendlyMessage) {
+        setError(err.userFriendlyMessage);
+      } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('Server request timed out. If using Render free tier, the server may be waking up (~30s). Please try again.');
+      } else if (err.response?.status === 401) {
+        setError('Invalid email or password. If you haven’t registered yet, please click "Create an account" below.');
       } else {
         setError(
           err.response?.data?.message || 
-          (err.response?.status === 401 
-            ? 'Invalid email or password. If you haven’t registered yet, please click "Create an account" below.' 
-            : 'Unable to connect to server. Please check your network or server status.')
+          err.message ||
+          'Unable to connect to server. Please check that your backend is running and reachable.'
         );
       }
     } finally {

@@ -42,12 +42,29 @@ const processQueue = (error: any, token: string | null = null) => {
     failedQueue = [];
 };
 
+export const isProductionMissingApiUrl = () => {
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        const base = getBaseUrl();
+        return base.includes('localhost') || base.includes('127.0.0.1');
+    }
+    return false;
+};
+
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
         if (!originalRequest) {
             return Promise.reject(error);
+        }
+
+        // Attach friendly diagnostic message on Network Error
+        if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
+            if (isProductionMissingApiUrl()) {
+                error.userFriendlyMessage = 'Deployment Error: Backend API URL is set to localhost. Please set VITE_API_URL in your hosting platform (Vercel/Netlify) to your deployed backend URL (e.g. https://your-backend.onrender.com/api/v1).';
+            } else {
+                error.userFriendlyMessage = 'Network Error: Unable to reach backend server. If using Render free tier, the server may be waking up from sleep (~30-45s). Please retry in a moment.';
+            }
         }
 
         // Avoid infinite loop on auth endpoints

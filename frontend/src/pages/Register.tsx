@@ -35,7 +35,11 @@ export default function Register() {
       }
     } catch (err: any) {
       console.error('Google registration error:', err);
-      if (err.message?.includes('api-key-not-valid') || err.message?.includes('invalid-api-key')) {
+      if (err.code === 'auth/unauthorized-domain' || err.message?.includes('unauthorized-domain')) {
+        setError('Unauthorized Domain: Please add your deployed domain to Firebase Console -> Authentication -> Settings -> Authorized Domains. You can also register with standard email below!');
+      } else if (err.code === 'auth/popup-closed-by-user' || err.message?.includes('popup-closed-by-user')) {
+        setError('Google sign-in popup was closed before completion. Please try again.');
+      } else if (err.message?.includes('api-key-not-valid') || err.message?.includes('invalid-api-key')) {
         setError('Firebase API Key missing: Please add your Firebase credentials to frontend/.env (see frontend/.env.example). You can also register with standard email below!');
       } else {
         setError(err.message || 'Google Sign-Up failed. Please try again.');
@@ -58,10 +62,16 @@ export default function Register() {
       navigate('/onboarding', { replace: true });
     } catch (err: any) {
       console.error('Registration error:', err);
-      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
-        setError('Server request timed out. Please try again in a moment.');
+      if (err.userFriendlyMessage) {
+        setError(err.userFriendlyMessage);
+      } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('Server request timed out. If using Render free tier, the server may be waking up (~30s). Please try again.');
       } else {
-        setError(err.response?.data?.message || 'Registration failed. Please check credentials or backend status.');
+        setError(
+          err.response?.data?.message || 
+          err.message || 
+          'Registration failed. Please verify that your backend server is reachable and database is connected.'
+        );
       }
     } finally {
       setLoading(false);

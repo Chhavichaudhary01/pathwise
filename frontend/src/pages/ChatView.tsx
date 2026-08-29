@@ -54,14 +54,20 @@ function renderFormattedMessage(content: string, sources?: SourceCitation[], isU
         // Markdown link: [text](url)
         const linkText = match[2];
         const linkUrl = match[3];
+        const isYoutube = linkUrl.includes('youtube.com') || linkUrl.includes('youtu.be');
         elements.push(
           <a
             key={`${lineIdx}-${match.index}`}
             href={linkUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-[#5051F9] dark:text-indigo-400 font-bold underline underline-offset-2 hover:opacity-80 inline-flex items-center gap-0.5 mx-0.5"
+            className={`inline-flex items-center gap-1 font-bold underline underline-offset-2 mx-0.5 ${
+              isYoutube
+                ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-lg border border-rose-200 dark:border-rose-800/60 no-underline hover:scale-105 transition-transform'
+                : 'text-[#5051F9] dark:text-indigo-400 hover:opacity-80'
+            }`}
           >
+            {isYoutube && <span className="text-xs">📺</span>}
             <span>{linkText}</span>
             <ExternalLink className="w-3 h-3 inline shrink-0" />
           </a>
@@ -98,15 +104,21 @@ function renderFormattedMessage(content: string, sources?: SourceCitation[], isU
       } else if (match[5]) {
         // Raw URL
         const rawUrl = match[5];
+        const isYoutube = rawUrl.includes('youtube.com') || rawUrl.includes('youtu.be');
         elements.push(
           <a
             key={`${lineIdx}-${match.index}`}
             href={rawUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-[#5051F9] dark:text-indigo-400 font-bold underline underline-offset-2 hover:opacity-80 inline-flex items-center gap-0.5 mx-0.5 break-all"
+            className={`font-bold inline-flex items-center gap-1 mx-0.5 break-all ${
+              isYoutube
+                ? 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded-lg border border-rose-200 dark:border-rose-800/60 no-underline hover:scale-105 transition-transform'
+                : 'text-[#5051F9] dark:text-indigo-400 underline underline-offset-2 hover:opacity-80'
+            }`}
           >
-            <span>{rawUrl}</span>
+            {isYoutube && <span className="text-xs">📺</span>}
+            <span>{isYoutube && rawUrl.includes('search_query=') ? 'Search YouTube Videos' : rawUrl}</span>
             <ExternalLink className="w-3 h-3 inline shrink-0" />
           </a>
         );
