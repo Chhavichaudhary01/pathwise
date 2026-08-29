@@ -31,6 +31,7 @@ import api from '@/lib/api';
 import StudentProfileModal from './StudentProfileModal';
 import CreateRoadmapModal from './CreateRoadmapModal';
 import ThemeToggle from './ThemeToggle';
+import NotificationDrawer from './notifications/NotificationDrawer';
 
 export default function AppLayout() {
   const { user, logout } = useAuthStore();
@@ -43,6 +44,8 @@ export default function AppLayout() {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [createRoadmapModalOpen, setCreateRoadmapModalOpen] = useState(false);
   const [isMandatoryModal, setIsMandatoryModal] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(2);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
 
@@ -387,13 +390,31 @@ export default function AppLayout() {
                 <Mail className="w-4 h-4" />
               </button>
 
-              <button 
-                className="relative w-9 h-9 rounded-full bg-white dark:bg-slate-900 border border-slate-200/70 dark:border-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-2xs transition-colors cursor-pointer"
-                title="Notifications"
-              >
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
-              </button>
+              {/* Interactive Notification Bell */}
+              <div className="relative">
+                <button 
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  className={`relative w-9 h-9 rounded-full border flex items-center justify-center transition-colors cursor-pointer shadow-2xs ${
+                    notificationsOpen
+                      ? 'bg-[#5051F9] text-white border-[#5051F9]'
+                      : 'bg-white dark:bg-slate-900 border-slate-200/70 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  }`}
+                  title="Notifications & Updates"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-rose-500 text-white font-extrabold text-[9px] rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                <NotificationDrawer
+                  isOpen={notificationsOpen}
+                  onClose={() => setNotificationsOpen(false)}
+                  onUnreadCountChange={(count) => setUnreadCount(count)}
+                />
+              </div>
 
               <div 
                 onClick={() => {

@@ -28,9 +28,16 @@ Frontend Developer at TechCraft Solutions (2023 - Present)
 SKILLS
 JavaScript, TypeScript, React, HTML5, CSS3, Tailwind CSS, Node.js, Express, PostgreSQL, REST APIs, Git, Jest.`;
 
+interface BulletRewrite {
+  original: string;
+  improved: string;
+  rationale: string;
+}
+
 interface AnalysisResult {
   targetRole: string;
   matchScore: number;
+  atsVerdict?: string;
   extractedSkills: string[];
   matchedSkills: string[];
   missingSkills: string[];
@@ -40,6 +47,8 @@ interface AnalysisResult {
   targetEstimatedSalary: string;
   salaryIncreasePercent: string;
   executiveSummary: string;
+  bulletRewrites?: BulletRewrite[];
+  actionPlanSteps?: string[];
   bridgeRoadmapId?: string;
 }
 
@@ -512,8 +521,87 @@ export default function ResumeAnalyzerView() {
 
           </div>
 
+          {/* Bullet Point Upgrades (Before vs After) */}
+          {result.bulletRewrites && result.bulletRewrites.length > 0 && (
+            <Card className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden text-left">
+              <CardHeader className="bg-slate-50/70 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                      💡
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm font-black text-slate-900 dark:text-slate-100">
+                        High-Impact Bullet Point Rewrites (ATS Ready)
+                      </CardTitle>
+                      <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+                        Plain-English before & after upgrades to replace vague duties with measurable metrics.
+                      </CardDescription>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                {result.bulletRewrites.map((rw, idx) => (
+                  <div 
+                    key={idx} 
+                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-2.5"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400">
+                          Original (Weak)
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-mono line-through">
+                        {rw.original}
+                      </p>
+                    </div>
+
+                    <div className="space-y-1 pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
+                          ✨ Upgraded (High Impact)
+                        </span>
+                      </div>
+                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800/60">
+                        {rw.improved}
+                      </p>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 dark:text-slate-400 italic">
+                      🎯 <strong>Why this works:</strong> {rw.rationale}
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Action Plan Steps */}
+          {result.actionPlanSteps && result.actionPlanSteps.length > 0 && (
+            <Card className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm text-left">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#5051F9]" />
+                  <span>Your 3-Step Clear Action Plan</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {result.actionPlanSteps.map((step, sIdx) => (
+                  <div key={sIdx} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 text-xs text-slate-800 dark:text-slate-200 flex items-start gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-[#5051F9] text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">
+                      {sIdx + 1}
+                    </span>
+                    <div className="flex-1 leading-relaxed" dangerouslySetInnerHTML={{ __html: step.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Launch Bridge Roadmap Action Banner */}
-          <div className="p-6 rounded-3xl bg-gradient-to-r from-[#4F46E5] to-[#6366F1] text-white shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-[#4F46E5] to-[#6366F1] text-white shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
             <div className="space-y-1 text-center sm:text-left">
               <div className="flex items-center gap-2 text-blue-200 text-xs font-extrabold uppercase">
                 <ShieldCheck className="w-4 h-4" />

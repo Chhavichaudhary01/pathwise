@@ -179,12 +179,16 @@ public class ResumeAnalyzerService {
         String targetSalaryStr = String.format("$%dk - $%dk", salary[2] / 1000, salary[3] / 1000);
         String increaseStr = "+" + diffPercent + "% Avg Jump";
 
-        // Executive Summary
+        // Executive Summary & Plain-English Insights
+        String atsVerdict = getAtsVerdict(matchScore);
         String executiveSummary = generateSummary(targetRole, matched, missing, estimatedWeeks, increaseStr);
+        List<ResumeAnalysisResponse.BulletRewrite> bulletRewrites = generateBulletRewrites(targetRole, matched, missing);
+        List<String> actionPlan = generateActionPlan(targetRole, missing, estimatedWeeks);
 
         return ResumeAnalysisResponse.builder()
                 .targetRole(targetRole)
                 .matchScore(matchScore)
+                .atsVerdict(atsVerdict)
                 .extractedSkills(extractedSkills)
                 .matchedSkills(matched)
                 .missingSkills(missing)
@@ -194,6 +198,8 @@ public class ResumeAnalyzerService {
                 .targetEstimatedSalary(targetSalaryStr)
                 .salaryIncreasePercent(increaseStr)
                 .executiveSummary(executiveSummary)
+                .bulletRewrites(bulletRewrites)
+                .actionPlanSteps(actionPlan)
                 .build();
     }
 
@@ -327,8 +333,56 @@ public class ResumeAnalyzerService {
         return false;
     }
 
+    private String getAtsVerdict(int score) {
+        if (score >= 80) return "🔥 Strong ATS Match (Top 10% Candidate Profile)";
+        if (score >= 60) return "⚡ Competitive Foundation (Minor Gaps to Senior)";
+        if (score >= 40) return "🛠️ Moderate Alignment (Accelerated Bridge Recommended)";
+        return "🌱 Foundational Stage (Prerequisite Track Recommended)";
+    }
+
+    private List<ResumeAnalysisResponse.BulletRewrite> generateBulletRewrites(String targetRole, List<String> matched, List<String> missing) {
+        List<ResumeAnalysisResponse.BulletRewrite> rewrites = new ArrayList<>();
+        
+        String topMatched = matched.isEmpty() ? "frontend features" : matched.get(0);
+        String secondMatched = matched.size() > 1 ? matched.get(1) : "REST API backend";
+
+        rewrites.add(ResumeAnalysisResponse.BulletRewrite.builder()
+                .original("Built web application features using " + topMatched + " and related tools.")
+                .improved("Architected and shipped modular " + topMatched + " production components, improving user interaction speed by 35% and reducing bundle latency.")
+                .rationale("Demonstrates quantifiable business impact, architectural ownership, and measurable performance improvements.")
+                .build());
+
+        rewrites.add(ResumeAnalysisResponse.BulletRewrite.builder()
+                .original("Worked with team to implement " + secondMatched + " services and database endpoints.")
+                .improved("Engineered high-throughput " + secondMatched + " microservices, integrating PostgreSQL with indexing to achieve sub-50ms p99 query latency.")
+                .rationale("Highlights technical depth, reliability metrics, and backend scalability over generic task descriptions.")
+                .build());
+
+        if (!missing.isEmpty()) {
+            rewrites.add(ResumeAnalysisResponse.BulletRewrite.builder()
+                    .original("Familiar with development workflows and automated testing.")
+                    .improved("Automated end-to-end CI/CD pipelines incorporating " + missing.get(0) + " and containerized Docker environments for 100% reproducible deployments.")
+                    .rationale("Bridges the missing " + missing.get(0) + " requirement by framing it as production automation.")
+                    .build());
+        }
+
+        return rewrites;
+    }
+
+    private List<String> generateActionPlan(String targetRole, List<String> missing, double weeks) {
+        List<String> plan = new ArrayList<>();
+        if (!missing.isEmpty()) {
+            plan.add("🎯 **Priority Bridge**: Focus on mastering **" + String.join(" & ", missing.subList(0, Math.min(2, missing.size()))) + "** through the PathWise Bridge Roadmap.");
+        } else {
+            plan.add("🎯 **Priority Bridge**: Polish system design and production scalability case studies.");
+        }
+        plan.add("📝 **Resume Formatting**: Upgrade 3-4 bullet points with quantifiable metrics (e.g., latency cuts, test coverage %, user scale).");
+        plan.add("⚡ **Proof-of-Skill**: Complete hands-on sandbox coding challenges to unlock verified portfolio badges.");
+        return plan;
+    }
+
     private String generateSummary(String targetRole, List<String> matched, List<String> missing, double weeks, String increaseStr) {
-        String matchedList = matched.isEmpty() ? "general coding foundations" : String.join(", ", matched.subList(0, Math.min(4, matched.size())));
+        String matchedList = matched.isEmpty() ? "general software foundations" : String.join(", ", matched.subList(0, Math.min(4, matched.size())));
         String missingList = missing.isEmpty() ? "advanced portfolio polishing" : String.join(", ", missing.subList(0, Math.min(3, missing.size())));
 
         return String.format(
@@ -339,3 +393,4 @@ public class ResumeAnalyzerService {
         );
     }
 }
+

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { 
   CheckCircle2, Circle, Clock, MessageSquare, 
   Sparkles, BookOpen, Zap, Search, Plus, ChevronDown, 
-  Compass, ArrowRight, X 
+  Compass, ArrowRight, X, Award 
 } from 'lucide-react';
 import api from '@/lib/api';
 import RoadmapInteractiveGraph from '@/components/RoadmapInteractiveGraph';
@@ -208,6 +208,25 @@ export default function RoadmapView() {
           }
         });
       }
+    }
+  };
+
+  const openMasteryQuiz = async () => {
+    if (!roadmap?.id) return;
+    setQuizMilestoneId(null);
+    setQuizModalOpen(true);
+    setQuizSubmitted(false);
+    setSelectedAnswers({});
+    setQuizScore(null);
+    setQuizLoading(true);
+
+    try {
+      const res = await api.get(`/roadmaps/${roadmap.id}/mastery-quiz`);
+      setQuizQuestions(res.data.questions || []);
+    } catch (err) {
+      console.error('Failed to load mastery quiz:', err);
+    } finally {
+      setQuizLoading(false);
     }
   };
 
@@ -473,6 +492,32 @@ export default function RoadmapView() {
             <h4 className="font-bold text-xs">Roadmap Visibly Re-Adapted!</h4>
             <p className="text-[11px] text-blue-100">{narration}</p>
           </div>
+        </div>
+      )}
+
+      {/* 100% Milestone Completion & Mastery Quiz Celebration Card */}
+      {progressPercent === 100 && (
+        <div className="p-6 md:p-8 bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 text-white rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6 animate-in zoom-in-95 duration-300 text-left border border-emerald-400/40">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-black uppercase tracking-wider text-emerald-100">
+              <Award className="w-4 h-4 text-amber-300" />
+              <span>🎉 100% Milestone Completion Achieved!</span>
+            </div>
+            <h3 className="text-xl md:text-2xl font-black text-white leading-tight">
+              Ready to Certify Your {roadmap?.title} Mastery?
+            </h3>
+            <p className="text-xs md:text-sm text-emerald-100 max-w-xl leading-relaxed">
+              You have completed all prerequisite milestones. Validate your end-to-end technical competencies with the comprehensive Certification Quiz and unlock your shareable portfolio credential.
+            </p>
+          </div>
+
+          <Button
+            onClick={openMasteryQuiz}
+            className="bg-white hover:bg-emerald-50 text-emerald-800 font-black rounded-2xl px-6 py-3.5 text-xs shadow-lg flex items-center gap-2 shrink-0 cursor-pointer hover:scale-105 transition-transform"
+          >
+            <span>🎓 Take Certification Mastery Quiz</span>
+            <ArrowRight className="w-4 h-4" />
+          </Button>
         </div>
       )}
 
@@ -748,12 +793,12 @@ export default function RoadmapView() {
       {/* Mastery Quiz Interactive Modal */}
       {quizModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <Card className="w-full max-w-xl bg-white shadow-2xl border border-slate-100 rounded-3xl max-h-[90vh] flex flex-col overflow-hidden">
+          <Card className="w-full max-w-xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-100 dark:border-slate-800 rounded-3xl max-h-[90vh] flex flex-col overflow-hidden text-left">
             <CardHeader className="bg-gradient-to-r from-[#4F46E5] to-[#6366F1] text-white p-6">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-base font-extrabold text-white flex items-center gap-2">
-                  <BookOpen className="w-4 h-4" />
-                  <span>Phase Mastery Assessment</span>
+                  <Award className="w-4 h-4 text-amber-300" />
+                  <span>{quizMilestoneId ? 'Milestone Mastery Assessment' : 'Comprehensive Track Certification Quiz'}</span>
                 </CardTitle>
                 <button 
                   onClick={() => setQuizModalOpen(false)} 
@@ -763,7 +808,9 @@ export default function RoadmapView() {
                 </button>
               </div>
               <CardDescription className="text-blue-100 text-xs mt-1">
-                Verifies prerequisite retention to update your skill DAG and verifiable credentials.
+                {quizMilestoneId 
+                  ? 'Verifies prerequisite retention to update your skill DAG and verifiable credentials.' 
+                  : 'Tests end-to-end competencies across all phases to certify your mastery.'}
               </CardDescription>
             </CardHeader>
 
@@ -771,24 +818,35 @@ export default function RoadmapView() {
               {quizLoading ? (
                 <div className="text-center py-10 space-y-2">
                   <div className="w-8 h-8 border-2 border-[#5051F9] border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p className="text-xs font-semibold text-slate-500">Generating mastery questions...</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Generating customized quiz questions...</p>
                 </div>
               ) : quizSubmitted ? (
                 <div className="text-center py-6 space-y-4">
                   <div className="text-4xl">🎉</div>
-                  <h3 className="text-xl font-extrabold text-slate-900">Score: {quizScore}%</h3>
-                  <p className="text-xs text-slate-600">
+                  <h3 className="text-xl font-extrabold text-slate-900 dark:text-white">Score: {quizScore}%</h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-300">
                     {quizScore && quizScore >= 70 
-                      ? 'Mastery verified! Milestone marked completed in your DAG graph.'
+                      ? '🏆 Mastery verified! Your technical credentials and DAG graph have been updated.'
                       : 'Review the explanations below to reinforce your understanding.'}
                   </p>
 
+                  {quizScore && quizScore >= 70 && !quizMilestoneId && (
+                    <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-indigo-500/10 border border-amber-400/40 text-center space-y-1">
+                      <p className="text-xs font-black text-amber-600 dark:text-amber-400">
+                        🎖️ Official Certificate Badge Unlocked!
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Check your public portfolio to share your verified credential on LinkedIn.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="space-y-3 text-left pt-2">
                     {quizQuestions.map((q) => (
-                      <div key={q.id} className="p-3.5 bg-[#F8F9FD] border border-slate-200/80 rounded-2xl space-y-1 text-xs">
-                        <p className="font-extrabold text-slate-900">{q.question}</p>
-                        <p className="text-emerald-700 font-bold">✓ Answer: {q.options[q.correctIndex]}</p>
-                        <p className="text-slate-500 text-[11px]">{q.explanation}</p>
+                      <div key={q.id} className="p-3.5 bg-[#F8F9FD] dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded-2xl space-y-1 text-xs">
+                        <p className="font-extrabold text-slate-900 dark:text-slate-100">{q.question}</p>
+                        <p className="text-emerald-700 dark:text-emerald-400 font-bold">✓ Answer: {q.options[q.correctIndex]}</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-[11px]">{q.explanation}</p>
                       </div>
                     ))}
                   </div>
@@ -804,7 +862,7 @@ export default function RoadmapView() {
                 <>
                   {quizQuestions.map((q, idx) => (
                     <div key={q.id} className="space-y-2">
-                      <h4 className="font-bold text-xs text-slate-900">
+                      <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100">
                         {idx + 1}. {q.question}
                       </h4>
                       <div className="space-y-1.5">
@@ -813,8 +871,8 @@ export default function RoadmapView() {
                             key={optIdx} 
                             className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                               selectedAnswers[q.id] === optIdx 
-                                ? 'bg-purple-50 border-[#5051F9] text-[#5051F9] font-bold shadow-2xs' 
-                                : 'bg-[#F8F9FD] border-slate-200/70 hover:bg-white text-slate-700'
+                                ? 'border-[#5051F9] bg-indigo-50/50 dark:bg-indigo-950/40 text-[#5051F9] dark:text-indigo-300 font-bold shadow-2xs' 
+                                : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                             }`}
                           >
                             <input

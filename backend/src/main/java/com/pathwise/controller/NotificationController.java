@@ -2,7 +2,10 @@ package com.pathwise.controller;
 
 import com.pathwise.domain.LearnerProfile;
 import com.pathwise.domain.User;
+import com.pathwise.domain.UserNotification;
+import com.pathwise.dto.UserNotificationDto;
 import com.pathwise.repository.LearnerProfileRepository;
+import com.pathwise.repository.UserNotificationRepository;
 import com.pathwise.repository.UserRepository;
 import com.pathwise.security.UserDetailsImpl;
 import com.pathwise.service.DailyReminderService;
@@ -11,9 +14,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -24,6 +31,7 @@ public class NotificationController {
 
     private final LearnerProfileRepository profileRepository;
     private final UserRepository userRepository;
+    private final UserNotificationRepository notificationRepository;
     private final DailyReminderService dailyReminderService;
 
     @Data
@@ -52,6 +60,7 @@ public class NotificationController {
     }
 
     @PutMapping("/preferences")
+    @Transactional
     public ResponseEntity<NotificationPreferencesDto> updatePreferences(@RequestBody NotificationPreferencesDto req) {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User user = userRepository.findById(userDetails.getId()).orElseThrow();
@@ -59,46 +68,90 @@ public class NotificationController {
                 .orElseGet(() -> {
                     LearnerProfile p = new LearnerProfile();
                     p.setUser(user);
-                    return profileRepository.save(p);
+                    return p;
                 });
 
-        if (req.getDailyReminderEnabled() != null) {
-            profile.setDailyReminderEnabled(req.getDailyReminderEnabled());
-        }
-        if (req.getDailyReminderTime() != null && !req.getDailyReminderTime().isBlank()) {
-            profile.setDailyReminderTime(req.getDailyReminderTime());
-        }
-        if (req.getNotificationEmail() != null) {
-            profile.setNotificationEmail(req.getNotificationEmail().trim());
-        }
+        if (req.getDailyReminderEnabled() != null) profile.setDailyReminderEnabled(req.getDailyReminderEnabled());
+        if (req.getDailyReminderTime() != null) profile.setDailyReminderTime(req.getDailyReminderTime());
+        if (req.getNotificationEmail() != null) profile.setNotificationEmail(req.getNotificationEmail().trim());
 
-        LearnerProfile saved = profileRepository.save(profile);
+        profileRepository.save(profile);
 
-        NotificationPreferencesDto dto = new NotificationPreferencesDto();
-        dto.setDailyReminderEnabled(saved.getDailyReminderEnabled());
-        dto.setDailyReminderTime(saved.getDailyReminderTime());
-        dto.setNotificationEmail(saved.getNotificationEmail());
-        dto.setStreakCount(saved.getStreakCount());
-        dto.setLongestStreak(saved.getLongestStreak());
+        req.setStreakCount(profile.getStreakCount() != null ? profile.getStreakCount() : 1);
+        req.setLongestStreak(profile.getLongestStreak() != null ? profile.getLongestStreak() : 1);
 
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(req);
     }
 
-    @PostMapping("/test-reminder")
-    public ResponseEntity<Map<String, Object>> sendTestReminder() {
+    @PostMapping("/send-test-reminder")
+    @Transactional
+    public ResponseEntity<?> sendTestReminder() {
         UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         boolean sent = dailyReminderService.sendReminderForUserId(userDetails.getId());
-
         if (sent) {
             return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Test reminder email dispatched successfully! Check your inbox or terminal log."
+                    "status", "success",
+                    "message", "Test reminder dispatched successfully! Check your email and notification center."
             ));
         } else {
             return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "Unable to send reminder email. Please check your notification email address."
+                    "status", "error",
+                    "message", "Could not dispatch reminder. Please verify your notification preferences."
             ));
         }
+    }
+
+    @GetMapping
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<UserNotificationDto>> getUserNotifications() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<UserNotification> notifications = notificationRepository.findByUserIdOrderByCreatedAtDesc(userDetails.getId());
+        
+        // If user has no notifications yet, initialize with welcome & streak notifications
+        if (notifications.isEmpty()) {
+            User user = userRepository.findById(userDetails.getId()).orElse(null);
+            if (user != null) {
+                UserNotification welcome = UserNotification.builder()
+                        .user(user)
+                        .title("🌟 Welcome to PathWise!")
+                        .message("Your AI Career Coach and Topological Roadmap are ready. Start exploring your personalized track.")
+                        .type("SYSTEM")
+                        .link("/roadmap")
+                        .isRead(false)
+                        .build();
+                notificationRepository.save(welcome);
+                notifications = List.of(welcome);
+            }
+        }
+
+        List<UserNotificationDto> dtos = notifications.stream().map(n -> UserNotificationDto.builder()
+                .id(n.getId())
+                .title(n.getTitle())
+                .message(n.getMessage())
+                .type(n.getType())
+                .link(n.getLink())
+                .isRead(n.getIsRead())
+                .createdAt(n.getCreatedAt())
+                .build()).collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    @PutMapping("/{id}/read")
+    @Transactional
+    public ResponseEntity<?> markAsRead(@PathVariable UUID id) {
+        return notificationRepository.findById(id).map(n -> {
+            n.setIsRead(true);
+            notificationRepository.save(n);
+            return ResponseEntity.ok(Map.of("status", "success", "id", id));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/read-all")
+    @Transactional
+    public ResponseEntity<?> markAllAsRead() {
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        notificationRepository.markAllAsReadForUser(userDetails.getId());
+        return ResponseEntity.ok(Map.of("status", "success", "message", "All notifications marked as read"));
     }
 }
