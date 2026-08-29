@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bot, 
@@ -7,10 +8,16 @@ import {
   Sparkles, 
   ExternalLink, 
   Zap, 
-  CheckCircle2
+  CheckCircle2,
+  LayoutDashboard,
+  Map,
+  Award,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dock } from '@/components/ui/dock';
+import { DockIcon } from '@/components/ui/dock-icon';
 import api from '@/lib/api';
 
 function renderClickableText(content: string, isUser: boolean) {
@@ -106,6 +113,9 @@ const PROMPT_SUGGESTION_CHIPS = [
 ];
 
 export default function FloatingAIAssistant() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -172,26 +182,91 @@ export default function FloatingAIAssistant() {
     ]);
   };
 
+  // Dock items configuration
+  const dockItems = [
+    {
+      title: 'Dashboard',
+      icon: <LayoutDashboard className="w-5 h-5" />,
+      path: '/dashboard',
+      onClick: () => navigate('/dashboard'),
+      isActive: location.pathname === '/dashboard',
+    },
+    {
+      title: 'Roadmap DAG',
+      icon: <Map className="w-5 h-5" />,
+      path: '/roadmap',
+      onClick: () => navigate('/roadmap'),
+      isActive: location.pathname.startsWith('/roadmap'),
+    },
+    {
+      title: 'Resume Scanner',
+      icon: <FileText className="w-5 h-5" />,
+      path: '/resume-analyzer',
+      onClick: () => navigate('/resume-analyzer'),
+      isActive: location.pathname === '/resume-analyzer',
+    },
+    {
+      title: 'Skill Badges',
+      icon: <Award className="w-5 h-5" />,
+      path: '/portfolio',
+      onClick: () => navigate('/portfolio'),
+      isActive: location.pathname === '/portfolio' || location.pathname === '/badges',
+    },
+  ];
+
   return (
     <>
-      {/* Floating Action Trigger Button */}
-      {!isOpen && (
-        <motion.button
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 p-4 rounded-full bg-gradient-to-r from-[#5051F9] via-[#6366F1] to-[#06B6D4] text-white shadow-[0_0_25px_rgba(79,70,229,0.5)] border border-white/20 cursor-pointer flex items-center justify-center group"
-          title="Open AI Career Coach"
+      {/* 21st.dev Floating Navigation Dock (Centered at Bottom) */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center">
+        <Dock
+          iconSize={42}
+          iconMagnification={58}
+          iconDistance={130}
+          className="border-slate-800/90 bg-slate-950/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] backdrop-blur-2xl px-3 py-2"
         >
-          <div className="relative">
-            <Bot className="w-6 h-6 text-white group-hover:rotate-12 transition-transform" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900 animate-ping" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-900" />
+          {dockItems.map((item, idx) => (
+            <div key={idx} className="relative group" onClick={item.onClick}>
+              <DockIcon
+                className={`${
+                  item.isActive
+                    ? 'bg-[#5051F9]/20 text-[#5051F9] border-[#5051F9]/40 shadow-[0_0_12px_rgba(80,81,249,0.3)]'
+                    : 'bg-slate-900/80 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                {item.icon}
+              </DockIcon>
+
+              {/* Hover Tooltip */}
+              <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-slate-900 border border-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-200 opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap shadow-md">
+                {item.title}
+              </span>
+            </div>
+          ))}
+
+          {/* Vertical Divider */}
+          <div className="h-6 w-[1px] bg-slate-800 mx-1" />
+
+          {/* AI Assistant Chat Trigger Dock Icon */}
+          <div className="relative group" onClick={() => setIsOpen(!isOpen)}>
+            <DockIcon
+              className={`relative bg-gradient-to-r from-[#5051F9] via-[#6366F1] to-[#06B6D4] text-white border-white/20 shadow-[0_0_20px_rgba(79,70,229,0.45)] hover:shadow-[0_0_28px_rgba(6,182,212,0.6)] ${
+                isOpen ? 'ring-2 ring-cyan-400' : ''
+              }`}
+            >
+              <div className="relative">
+                <Bot className="w-5 h-5 text-white" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400" />
+              </div>
+            </DockIcon>
+
+            {/* Hover Tooltip */}
+            <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-slate-900 border border-slate-800 px-2 py-0.5 text-[10px] font-bold text-cyan-300 opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap shadow-md">
+              {isOpen ? 'Close AI Coach' : 'AI Career Coach'}
+            </span>
           </div>
-        </motion.button>
-      )}
+        </Dock>
+      </div>
 
       {/* Floating AI Assistant Drawer */}
       <AnimatePresence>
@@ -201,7 +276,7 @@ export default function FloatingAIAssistant() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="fixed bottom-6 right-6 z-50 w-[92vw] sm:w-[420px] h-[580px] max-h-[85vh] rounded-3xl bg-slate-950/95 border border-slate-800 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-2xl flex flex-col overflow-hidden text-white"
+            className="fixed bottom-24 right-4 sm:right-8 z-50 w-[92vw] sm:w-[420px] h-[580px] max-h-[80vh] rounded-3xl bg-slate-950/95 border border-slate-800 shadow-[0_12px_40px_rgba(0,0,0,0.7)] backdrop-blur-2xl flex flex-col overflow-hidden text-white"
           >
             {/* Header */}
             <div className="p-4 bg-gradient-to-r from-indigo-950/80 via-slate-900/90 to-purple-950/80 border-b border-slate-800/90 flex items-center justify-between">
