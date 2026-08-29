@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
+import { useDock } from "@/components/ui/dock";
 import { cn } from "@/lib/utils";
 
 export interface DockIconProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -12,54 +13,60 @@ export interface DockIconProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
-const DEFAULT_SIZE = 42;
-const DEFAULT_MAGNIFICATION = 60;
-const DEFAULT_DISTANCE = 140;
-
 export const DockIcon: React.FC<DockIconProps> = ({
-  size = DEFAULT_SIZE,
-  magnification = DEFAULT_MAGNIFICATION,
-  distance = DEFAULT_DISTANCE,
-  disableMagnification = false,
-  mouseX,
+  size: propSize,
+  magnification: propMagnification,
+  distance: propDistance,
+  disableMagnification: propDisable,
+  mouseX: propMouseX,
   className,
   children,
+  onClick,
   ...props
 }) => {
+  const dock = useDock();
   const ref = useRef<HTMLDivElement>(null);
-  const padding = Math.max(6, size * 0.2);
-  const fallbackMouseX = useMotionValue(Infinity);
 
-  const distanceCalc = useTransform(mouseX ?? fallbackMouseX, (val: number) => {
+  const fallbackMouseX = useMotionValue(Infinity);
+  const activeMouseX = propMouseX ?? dock?.mouseX ?? fallbackMouseX;
+  const activeSize = propSize ?? dock?.size ?? 44;
+  const activeMagnification = propMagnification ?? dock?.magnification ?? 68;
+  const activeDistance = propDistance ?? dock?.distance ?? 140;
+  const isDisable = propDisable ?? dock?.disableMagnification ?? false;
+
+  const distanceCalc = useTransform(activeMouseX, (val: number) => {
     const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
-    return val - bounds.x - bounds.width / 2;
+    return val - (bounds.x + bounds.width / 2);
   });
 
-  const targetSize = disableMagnification ? size : magnification;
+  const targetSize = isDisable ? activeSize : activeMagnification;
 
   const sizeTransform = useTransform(
     distanceCalc,
-    [-distance, 0, distance],
-    [size, targetSize, size]
+    [-activeDistance, 0, activeDistance],
+    [activeSize, targetSize, activeSize]
   );
 
   const scaleSize = useSpring(sizeTransform, {
     mass: 0.1,
-    stiffness: 160,
+    stiffness: 170,
     damping: 14,
   });
 
   return (
     <motion.div
       ref={ref}
-      style={{ width: scaleSize, height: scaleSize, padding }}
+      style={{ width: scaleSize, height: scaleSize }}
+      onClick={onClick}
       className={cn(
-        "flex aspect-square cursor-pointer items-center justify-center rounded-2xl bg-slate-800/60 text-slate-300 hover:bg-slate-700/80 hover:text-white transition-colors duration-150 border border-slate-700/50 shadow-sm",
+        "flex aspect-square cursor-pointer items-center justify-center rounded-2xl bg-slate-800/80 text-slate-300 hover:text-white transition-colors duration-150 border border-slate-700/60 shadow-md p-2.5",
         className
       )}
       {...(props as any)}
     >
-      <div className="flex items-center justify-center pointer-events-none">{children}</div>
+      <div className="flex items-center justify-center pointer-events-none w-full h-full [&>svg]:w-full [&>svg]:h-full">
+        {children}
+      </div>
     </motion.div>
   );
 };

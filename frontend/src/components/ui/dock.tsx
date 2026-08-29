@@ -1,9 +1,22 @@
-import React from "react";
-import { motion, useMotionValue } from "framer-motion";
+import React, { createContext, useContext } from "react";
+import { motion, useMotionValue, type MotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { DockIcon, type DockIconProps } from "@/components/ui/dock-icon";
 
-export interface DockProps {
+interface DockContextType {
+  mouseX: MotionValue<number>;
+  size: number;
+  magnification: number;
+  distance: number;
+  disableMagnification: boolean;
+}
+
+export const DockContext = createContext<DockContextType | null>(null);
+
+export const useDock = () => {
+  return useContext(DockContext);
+};
+
+export interface DockProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   size?: number;
   iconSize?: number;
@@ -16,8 +29,8 @@ export interface DockProps {
   children: React.ReactNode;
 }
 
-const DEFAULT_SIZE = 42;
-const DEFAULT_MAGNIFICATION = 60;
+const DEFAULT_SIZE = 44;
+const DEFAULT_MAGNIFICATION = 68;
 const DEFAULT_DISTANCE = 140;
 
 export const Dock = React.forwardRef<HTMLDivElement, DockProps>(
@@ -43,40 +56,34 @@ export const Dock = React.forwardRef<HTMLDivElement, DockProps>(
 
     const mouseX = useMotionValue(Infinity);
 
-    const renderChildren = () => {
-      return React.Children.map(children, (child) => {
-        if (React.isValidElement<DockIconProps>(child) && child.type === DockIcon) {
-          return React.cloneElement(child, {
-            ...child.props,
-            mouseX: mouseX,
-            size: activeSize,
-            magnification: activeMagnification,
-            distance: activeDistance,
-            disableMagnification: disableMagnification,
-          });
-        }
-        return child;
-      });
-    };
-
     return (
-      <motion.div
-        ref={ref}
-        onMouseMove={(e) => mouseX.set(e.pageX)}
-        onMouseLeave={() => mouseX.set(Infinity)}
-        {...props}
-        className={cn(
-          "flex h-[62px] w-max items-center justify-center gap-2 rounded-2xl border border-slate-800/80 bg-slate-900/80 p-2 shadow-2xl backdrop-blur-2xl transition-all duration-300 pointer-events-auto",
-          {
-            "items-start": direction === "top",
-            "items-center": direction === "middle",
-            "items-end": direction === "bottom",
-          },
-          className
-        )}
+      <DockContext.Provider
+        value={{
+          mouseX,
+          size: activeSize,
+          magnification: activeMagnification,
+          distance: activeDistance,
+          disableMagnification,
+        }}
       >
-        {renderChildren()}
-      </motion.div>
+        <motion.div
+          ref={ref}
+          onMouseMove={(e) => mouseX.set(e.clientX)}
+          onMouseLeave={() => mouseX.set(Infinity)}
+          className={cn(
+            "flex h-[66px] w-max items-center justify-center gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/80 px-3 py-2 shadow-2xl backdrop-blur-2xl transition-all duration-300 pointer-events-auto",
+            {
+              "items-start": direction === "top",
+              "items-center": direction === "middle",
+              "items-end": direction === "bottom",
+            },
+            className
+          )}
+          {...(props as any)}
+        >
+          {children}
+        </motion.div>
+      </DockContext.Provider>
     );
   }
 );

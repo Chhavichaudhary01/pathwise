@@ -219,25 +219,26 @@ export default function FloatingAIAssistant() {
       {/* 21st.dev Floating Navigation Dock (Centered at Bottom) */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col items-center">
         <Dock
-          iconSize={42}
-          iconMagnification={58}
-          iconDistance={130}
-          className="border-slate-800/90 bg-slate-950/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] backdrop-blur-2xl px-3 py-2"
+          iconSize={44}
+          iconMagnification={66}
+          iconDistance={140}
+          className="border-slate-800/90 bg-slate-950/85 shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-2xl px-3.5 py-2"
         >
           {dockItems.map((item, idx) => (
-            <div key={idx} className="relative group" onClick={item.onClick}>
+            <div key={idx} className="relative group flex items-center justify-center">
               <DockIcon
+                onClick={item.onClick}
                 className={`${
                   item.isActive
-                    ? 'bg-[#5051F9]/20 text-[#5051F9] border-[#5051F9]/40 shadow-[0_0_12px_rgba(80,81,249,0.3)]'
-                    : 'bg-slate-900/80 text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-[#5051F9]/25 text-[#5051F9] border-[#5051F9]/50 shadow-[0_0_16px_rgba(80,81,249,0.4)]'
+                    : 'bg-slate-900/90 text-slate-400 hover:text-white hover:bg-slate-800'
                 }`}
               >
                 {item.icon}
               </DockIcon>
 
               {/* Hover Tooltip */}
-              <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-slate-900 border border-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-200 opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap shadow-md">
+              <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 rounded-md bg-slate-900 border border-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-200 opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap shadow-md z-30">
                 {item.title}
               </span>
             </div>
@@ -247,13 +248,14 @@ export default function FloatingAIAssistant() {
           <div className="h-6 w-[1px] bg-slate-800 mx-1" />
 
           {/* AI Assistant Chat Trigger Dock Icon */}
-          <div className="relative group" onClick={() => setIsOpen(!isOpen)}>
+          <div className="relative group flex items-center justify-center">
             <DockIcon
+              onClick={() => setIsOpen(!isOpen)}
               className={`relative bg-gradient-to-r from-[#5051F9] via-[#6366F1] to-[#06B6D4] text-white border-white/20 shadow-[0_0_20px_rgba(79,70,229,0.45)] hover:shadow-[0_0_28px_rgba(6,182,212,0.6)] ${
                 isOpen ? 'ring-2 ring-cyan-400' : ''
               }`}
             >
-              <div className="relative">
+              <div className="relative flex items-center justify-center">
                 <Bot className="w-5 h-5 text-white" />
                 <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                 <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400" />
@@ -261,7 +263,7 @@ export default function FloatingAIAssistant() {
             </DockIcon>
 
             {/* Hover Tooltip */}
-            <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 rounded-md bg-slate-900 border border-slate-800 px-2 py-0.5 text-[10px] font-bold text-cyan-300 opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap shadow-md">
+            <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 rounded-md bg-slate-900 border border-slate-800 px-2 py-0.5 text-[10px] font-bold text-cyan-300 opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap shadow-md z-30">
               {isOpen ? 'Close AI Coach' : 'AI Career Coach'}
             </span>
           </div>
