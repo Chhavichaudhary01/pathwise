@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -37,6 +37,7 @@ export default function AppLayout() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
@@ -48,6 +49,18 @@ export default function AppLayout() {
   const [unreadCount, setUnreadCount] = useState(2);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setSearchFocused(true);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   const fetchLayoutData = () => {
     Promise.all([
@@ -283,8 +296,9 @@ export default function AppLayout() {
             <div className="relative flex-1 max-w-lg w-full">
               <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
               <input
+                ref={searchInputRef}
                 type="text"
-                placeholder="Search roadmaps, projects, skills, or milestones...."
+                placeholder="Search roadmaps, projects, skills, or milestones... (⌘K)"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setSearchFocused(true)}
@@ -297,8 +311,8 @@ export default function AppLayout() {
                 }}
                 className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-full pl-10 pr-12 py-2.5 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#5051F9]/20 focus:border-[#5051F9] shadow-2xs transition-all"
               />
-              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded font-mono font-medium border border-slate-200 dark:border-slate-700">
-                ⌘F
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded-md font-mono font-bold border border-slate-200 dark:border-slate-700 pointer-events-none shadow-2xs">
+                ⌘K
               </span>
 
               {/* Search Results / Quick Create Overlay */}
