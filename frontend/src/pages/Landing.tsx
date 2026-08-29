@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuthStore } from '@/store/authStore';
 import ThemeToggle from '@/components/ThemeToggle';
+import SpotlightHero from '@/components/ui/spotlight-hero';
 import api from '@/lib/api';
 
 interface LandingData {
@@ -54,20 +54,20 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-      <div className="max-w-4xl w-full text-center space-y-8">
+    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col items-center justify-center p-4 sm:p-6 select-none">
+      <div className="max-w-5xl w-full text-center space-y-6">
         
         {/* Top User Bar */}
-        <div className="flex justify-between items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-5 py-2 rounded-full shadow-sm max-w-lg mx-auto text-xs">
+        <div className="flex justify-between items-center bg-slate-900/80 backdrop-blur-md border border-slate-800 px-5 py-2.5 rounded-full shadow-lg max-w-xl mx-auto text-xs">
           {isAuthenticated && user ? (
             <>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span className="font-semibold text-slate-700 dark:text-slate-300">Signed in as {user.email}</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span className="font-semibold text-slate-200">Signed in as {user.email}</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <ThemeToggle />
-                <button onClick={logout} className="text-slate-500 hover:text-red-600 font-bold cursor-pointer">
+                <button onClick={logout} className="text-slate-400 hover:text-rose-400 font-bold cursor-pointer transition-colors">
                   Log Out
                 </button>
               </div>
@@ -75,15 +75,15 @@ export default function Landing() {
           ) : (
             <>
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                <span className="font-semibold text-slate-700 dark:text-slate-300">PathWise AI Platform</span>
+                <span className="w-2 h-2 rounded-full bg-[#5051F9] animate-pulse"></span>
+                <span className="font-semibold text-slate-200">PathWise AI Platform</span>
               </div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <ThemeToggle />
-                <Link to="/login" className="text-blue-600 dark:text-indigo-400 hover:underline font-bold">
+                <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-bold transition-colors">
                   Sign In
                 </Link>
-                <Link to="/register" className="bg-blue-600 text-white px-3 py-1 rounded-full font-bold hover:bg-blue-700">
+                <Link to="/register" className="bg-[#5051F9] text-white px-3.5 py-1 rounded-full font-bold hover:bg-indigo-600 transition-colors shadow-xs">
                   Sign Up
                 </Link>
               </div>
@@ -91,101 +91,68 @@ export default function Landing() {
           )}
         </div>
 
-        {/* Engine & DB Status Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 border border-blue-200 text-blue-700 rounded-full text-xs font-semibold">
-          <span>⚡ Engine: {meta?.aiEngine || 'Google Gemini 1.5 Flash'}</span>
-          <span>•</span>
-          <span>DB: {meta?.database || 'Neon PostgreSQL'}</span>
-        </div>
+        {/* 21st.dev Spotlight Hero Component */}
+        <SpotlightHero
+          appName={meta?.appName || 'PathWise'}
+          tagline={meta?.tagline || "Tell us where you want to go. We'll generate a personalized, prerequisite-resolved roadmap to get you there—step by step."}
+          aiEngine={meta?.aiEngine || 'Google Gemini 1.5 Flash'}
+          database={meta?.database || 'Neon PostgreSQL'}
+          isAuthenticated={isAuthenticated}
+          onPrimaryClick={() => navigate(isAuthenticated ? '/dashboard' : '/register')}
+          onDemoClick={handleInstantDemo}
+          onSecondaryClick={() => navigate('/skill-graph')}
+          demoLoading={demoLoading}
+        />
 
-        {/* Hero Title */}
-        <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 tracking-tight">
-          Your AI-Powered Career <span className="text-blue-600">PathWise</span>
-        </h1>
-        <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto">
-          {meta?.tagline || "Tell us where you want to go. We'll generate a personalized, prerequisite-resolved roadmap to get you there—step by step."}
-        </p>
-
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-3 justify-center items-center pt-2">
-          {isAuthenticated ? (
-            <>
-              <Link to="/dashboard">
-                <Button size="lg" className="text-base px-8 bg-blue-600 hover:bg-blue-700 font-bold shadow-md">
-                  Go to Dashboard &rarr;
-                </Button>
-              </Link>
-              <Link to="/my-task">
-                <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
-                  📋 My Tasks
-                </Button>
-              </Link>
-              <Link to="/onboarding">
-                <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
-                  + Generate Roadmap
-                </Button>
-              </Link>
-              <Link to="/skill-graph">
-                <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
-                  🕸️ Skill DAG
-                </Button>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Button 
-                onClick={handleInstantDemo} 
-                disabled={demoLoading}
-                size="lg" 
-                className="text-base px-8 bg-blue-600 hover:bg-blue-700 font-bold shadow-md"
-              >
-                {demoLoading ? 'Launching Demo...' : '⚡ Try Instant Demo (1-Click) 🚀'}
-              </Button>
-              <Link to="/register">
-                <Button size="lg" variant="outline" className="text-base px-6 font-semibold">
-                  Create Free Account
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button size="lg" variant="ghost" className="text-base px-4 font-semibold text-slate-600">
-                  Sign In &rarr;
-                </Button>
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Stats & Career Tracks Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 text-left">
-          <Card className="border shadow-sm bg-white">
-            <CardContent className="pt-6">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Deterministic DAG Engine</h3>
-              <p className="text-2xl font-black text-slate-900 mt-1">{meta?.totalSkillsCovered || 14}+ Core Skills</p>
-              <p className="text-xs text-slate-500 mt-2">Zero prerequisite hallucinations via Topological Sorting.</p>
+        {/* Platform Capability Highlights */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+          <Card className="bg-slate-900/60 border-slate-800/80 backdrop-blur-md shadow-sm">
+            <CardContent className="p-5 space-y-1.5">
+              <span className="text-xl">🕸️</span>
+              <h3 className="font-bold text-sm text-white">Topological Skill DAG</h3>
+              <p className="text-xs text-slate-400">
+                Interactive prerequisite graphs resolving dependency loops before study starts.
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border shadow-sm bg-white">
-            <CardContent className="pt-6">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Curated Catalog</h3>
-              <p className="text-2xl font-black text-slate-900 mt-1">{meta?.totalCatalogItems || 60}+ Courses & Projects</p>
-              <p className="text-xs text-slate-500 mt-2">Semantic vector matching powered by text-embedding-004.</p>
+          <Card className="bg-slate-900/60 border-slate-800/80 backdrop-blur-md shadow-sm">
+            <CardContent className="p-5 space-y-1.5">
+              <span className="text-xl">📄</span>
+              <h3 className="font-bold text-sm text-white">AI ATS Resume Gap Audit</h3>
+              <p className="text-xs text-slate-400">
+                Identifies missing technical competencies and auto-generates bridge roadmaps.
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border shadow-sm bg-white">
-            <CardContent className="pt-6">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Target Career Tracks</h3>
-              <div className="flex flex-wrap gap-1 mt-2">
-                {(meta?.tracks || ['Frontend', 'Data Analyst', 'ML Engineer', 'Product Manager']).map(track => (
-                  <span key={track} className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
-                    {track}
-                  </span>
-                ))}
-              </div>
+          <Card className="bg-slate-900/60 border-slate-800/80 backdrop-blur-md shadow-sm">
+            <CardContent className="p-5 space-y-1.5">
+              <span className="text-xl">⚡</span>
+              <h3 className="font-bold text-sm text-white">Proof-of-Skill Sandbox</h3>
+              <p className="text-xs text-slate-400">
+                Test out of familiar topics with interactive AI evaluations and instant milestone mastery.
+              </p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Available Career Tracks */}
+        {meta?.tracks && (
+          <div className="pt-2 text-xs text-slate-400 space-y-2">
+            <p className="font-medium text-slate-300">Supported Target Career Tracks:</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {meta.tracks.map((t, idx) => (
+                <span 
+                  key={idx} 
+                  className="px-3 py-1 bg-slate-900 border border-slate-800 rounded-full text-slate-300 font-medium"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
